@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: stayflow-postgres
+    environment:
+      POSTGRES_DB: ${DB_USER}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  postgres-test:
+    image: postgres:15
+    container_name: stayflow-postgres-test
+    environment:
+      POSTGRES_DB: stayflow_test
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_data:
