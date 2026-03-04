@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${DB_TEST_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  flyway:
+    enabled: true
+
+  jpa:
+    show-sql: false
