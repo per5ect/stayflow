@@ -1,5 +1,6 @@
 package com.stayflow.backend.domain.payment;
 
+import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.reservation.ReservationStatus;
 import com.stayflow.backend.domain.user.User;
@@ -123,7 +124,7 @@ class PaymentServiceTest {
                 .status(PaymentStatus.REFUNDED)
                 .build();
 
-        assertThrows(IllegalStateException.class, () ->
+        assertThrows(PaymentException.class, () ->
                 paymentService.refundPayment(payment));
     }
 

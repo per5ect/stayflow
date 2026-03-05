@@ -1,5 +1,9 @@
 package com.stayflow.backend.domain.user;
 
+import com.stayflow.backend.common.exception.user.InvalidPasswordException;
+import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
+import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
+import com.stayflow.backend.common.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,7 +21,7 @@ public class UserService {
     public User register(String firstName, String lastName,
                          String email, String password, UserRole role) {
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new UserAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -52,7 +56,7 @@ public class UserService {
 
     public User changePassword(User user, String oldPassword, String newPassword) {
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Old password is incorrect");
+            throw new InvalidPasswordException("Old password is incorrect");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedAt(LocalDateTime.now());
@@ -61,15 +65,15 @@ public class UserService {
 
     private User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     private void validateVerificationCode(User user, String code) {
         if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Verification code expired");
+            throw new InvalidVerificationCodeException("Verification code expired");
         }
         if (!user.getVerificationCode().equals(code)) {
-            throw new IllegalArgumentException("Invalid verification code");
+            throw new InvalidVerificationCodeException("Invalid verification code");
         }
     }
 

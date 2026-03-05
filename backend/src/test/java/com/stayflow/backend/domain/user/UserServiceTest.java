@@ -1,5 +1,8 @@
 package com.stayflow.backend.domain.user;
 
+import com.stayflow.backend.common.exception.user.InvalidPasswordException;
+import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
+import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +71,7 @@ class UserServiceTest {
     void shouldThrowException_whenEmailAlreadyExists() {
         when(userRepository.existsByEmail("petr@test.com")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(UserAlreadyExistsException.class, () ->
                 userService.register(
                         "Petr", "Svoboda", "petr@test.com", "plainPassword", UserRole.RENTER));
     }
@@ -91,7 +94,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("petr@test.com"))
                 .thenReturn(Optional.of(existingUser));
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidVerificationCodeException.class, () ->
                 userService.verifyEmail("petr@test.com", "999999"));
     }
 
@@ -101,7 +104,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("petr@test.com"))
                 .thenReturn(Optional.of(existingUser));
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidVerificationCodeException.class, () ->
                 userService.verifyEmail("petr@test.com", "123456"));
     }
 
@@ -131,11 +134,9 @@ class UserServiceTest {
 
     @Test
     void shouldThrowException_whenOldPasswordIsWrong() {
-        // ARRANGE
         when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
 
-        // ACT + ASSERT
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidPasswordException.class, () ->
                 userService.changePassword(existingUser, "wrongPassword", "newPassword"));
     }
 }

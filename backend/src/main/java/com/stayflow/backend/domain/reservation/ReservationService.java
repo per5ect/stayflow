@@ -1,7 +1,7 @@
 package com.stayflow.backend.domain.reservation;
 
-import com.stayflow.backend.common.exception.InvalidReservationException;
-import com.stayflow.backend.common.exception.ReservationConflictException;
+import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
+import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
 import com.stayflow.backend.domain.user.User;

@@ -1,5 +1,6 @@
 package com.stayflow.backend.domain.payment;
 
+import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class PaymentService {
 
     public Payment refundPayment(Payment payment) {
         if (payment.getStatus() == PaymentStatus.REFUNDED) {
-            throw new IllegalStateException("Payment is already refunded");
+            throw new PaymentException("Payment is already refunded");
         }
         payment.setStatus(PaymentStatus.REFUNDED);
         return paymentRepository.save(payment);
