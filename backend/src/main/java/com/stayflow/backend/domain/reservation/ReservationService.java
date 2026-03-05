@@ -21,46 +21,27 @@ public class ReservationService {
 
     public Reservation createReservation(User renter, Apartment apartment,
                                          LocalDate checkIn, LocalDate checkOut) {
-        if (checkIn == null || checkOut == null) {
-            throw new InvalidReservationException("Dates are required");
-        }
-        if (!checkOut.isAfter(checkIn)) {
-            throw new InvalidReservationException("Check-out must be after check-in");
-        }
-        if (apartment.getStatus() != ApartmentStatus.ACTIVE) {
-            throw new InvalidReservationException("Apartment is not available");
-        }
-        if (apartment.getLandlord().getId().equals(renter.getId())) {
-            throw new InvalidReservationException("Cannot book own apartment");
-        }
-        if (reservationRepository.existsOverlapping(apartment.getId(), checkIn, checkOut)) {
-            throw new ReservationConflictException("Already booked for these dates");
-        }
+        validateDates(checkIn, checkOut);
+        validateApartmentAvailable(apartment);
+        validateNotOwnApartment(renter, apartment);
+        validateNoDatesOverlap(apartment.getId(), checkIn, checkOut);
 
-        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-        BigDecimal total = apartment.getPricePerNight().multiply(BigDecimal.valueOf(nights));
-        if (nights >= 7) {
-            total = total.subtract(total.multiply(BigDecimal.valueOf(0.10)));
-        }
+        BigDecimal totalPrice = calculatePrice(apartment.getPricePerNight(), checkIn, checkOut);
 
-        return reservationRepository.save(Reservation.builder()
+        Reservation reservation = Reservation.builder()
                 .renter(renter)
                 .apartment(apartment)
                 .checkIn(checkIn)
                 .checkOut(checkOut)
-                .totalPrice(total)
+                .totalPrice(totalPrice)
                 .status(ReservationStatus.PENDING)
-                .build());
+                .build();
+
+        return reservationRepository.save(reservation);
     }
 
     public Reservation cancelReservation(Reservation reservation) {
-        if (reservation.getStatus() == ReservationStatus.CANCELLED) {
-            throw new InvalidReservationException("Already cancelled");
-        }
-        if (ChronoUnit.HOURS.between(LocalDate.now().atStartOfDay(),
-                reservation.getCheckIn().atStartOfDay()) < 24) {
-            throw new InvalidReservationException("Cannot cancel less than 24 hours before check-in");
-        }
+        validateCancellable(reservation);
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservation.setUpdatedAt(LocalDateTime.now());
         return reservationRepository.save(reservation);
@@ -70,9 +51,56 @@ public class ReservationService {
                                      LocalDate checkIn, LocalDate checkOut) {
         long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
         BigDecimal total = pricePerNight.multiply(BigDecimal.valueOf(nights));
+
         if (nights >= 7) {
-            total = total.subtract(total.multiply(BigDecimal.valueOf(0.10)));
+            BigDecimal discount = total.multiply(BigDecimal.valueOf(0.10));
+            total = total.subtract(discount);
         }
+
         return total;
+    }
+
+
+    private void validateDates(LocalDate checkIn, LocalDate checkOut) {
+        if (checkIn == null || checkOut == null) {
+            throw new InvalidReservationException("Check-in and check-out dates are required");
+        }
+        if (!checkOut.isAfter(checkIn.plusDays(0))) {
+            throw new InvalidReservationException("Check-out must be after check-in");
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            throw new InvalidReservationException("Check-out must be at least 1 day after check-in");
+        }
+    }
+
+    private void validateApartmentAvailable(Apartment apartment) {
+        if (apartment.getStatus() != ApartmentStatus.ACTIVE) {
+            throw new InvalidReservationException("Apartment is not available for booking");
+        }
+    }
+
+    private void validateNotOwnApartment(User renter, Apartment apartment) {
+        if (apartment.getLandlord().getId().equals(renter.getId())) {
+            throw new InvalidReservationException("Landlord cannot book their own apartment");
+        }
+    }
+
+    private void validateNoDatesOverlap(Long apartmentId,
+                                        LocalDate checkIn, LocalDate checkOut) {
+        if (reservationRepository.existsOverlapping(apartmentId, checkIn, checkOut)) {
+            throw new ReservationConflictException("Apartment is already booked for these dates");
+        }
+    }
+
+    private void validateCancellable(Reservation reservation) {
+        if (reservation.getStatus() == ReservationStatus.CANCELLED) {
+            throw new InvalidReservationException("Reservation is already cancelled");
+        }
+        LocalDate today = LocalDate.now();
+        if (ChronoUnit.HOURS.between(today.atStartOfDay(),
+                reservation.getCheckIn().atStartOfDay()) < 24) {
+            throw new InvalidReservationException(
+                    "Cannot cancel reservation less than 24 hours before check-in");
+        }
     }
 }
