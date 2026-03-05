@@ -20,25 +20,7 @@ public class PaymentService {
 
     public Payment processPayment(Reservation reservation, User landlord,
                                   String cardLastFour, String cardBrand) {
-        BigDecimal amount = reservation.getTotalPrice();
-        BigDecimal commission = calculateCommission(amount);
-        BigDecimal landlordPayout = calculateLandlordPayout(amount);
-
-        Payment payment = Payment.builder()
-                .reservation(reservation)
-                .renter(reservation.getRenter())
-                .landlord(landlord)
-                .amount(amount)
-                .commission(commission)
-                .landlordPayout(landlordPayout)
-                .status(PaymentStatus.COMPLETED)
-                .cardLastFour(cardLastFour)
-                .cardBrand(cardBrand)
-                .transactionId(generateTransactionId())
-                .receiptNumber(generateReceiptNumber())
-                .paidAt(LocalDateTime.now())
-                .build();
-
+        Payment payment = buildPayment(reservation, landlord, cardLastFour, cardBrand);
         return paymentRepository.save(payment);
     }
 
@@ -58,6 +40,25 @@ public class PaymentService {
     public BigDecimal calculateLandlordPayout(BigDecimal amount) {
         return amount.subtract(calculateCommission(amount))
                 .setScale(1, RoundingMode.HALF_UP);
+    }
+
+    private Payment buildPayment(Reservation reservation, User landlord,
+                                 String cardLastFour, String cardBrand) {
+        BigDecimal amount = reservation.getTotalPrice();
+        return Payment.builder()
+                .reservation(reservation)
+                .renter(reservation.getRenter())
+                .landlord(landlord)
+                .amount(amount)
+                .commission(calculateCommission(amount))
+                .landlordPayout(calculateLandlordPayout(amount))
+                .status(PaymentStatus.COMPLETED)
+                .cardLastFour(cardLastFour)
+                .cardBrand(cardBrand)
+                .transactionId(generateTransactionId())
+                .receiptNumber(generateReceiptNumber())
+                .paidAt(LocalDateTime.now())
+                .build();
     }
 
     private String generateTransactionId() {
