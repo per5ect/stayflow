@@ -1,6 +1,5 @@
 package com.stayflow.backend.domain.user;
 
-import com.stayflow.backend.common.exception.InvalidReservationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
