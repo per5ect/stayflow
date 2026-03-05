@@ -41,6 +41,6 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration: 86400000
+    expiration: 3600000
   commission:
     rate: ${APP_COMMISSION_RATE}
