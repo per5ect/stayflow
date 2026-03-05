@@ -36,24 +36,9 @@ public class UserService {
     }
 
     public User verifyEmail(String email, String code) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Verification code expired");
-        }
-
-        if (!user.getVerificationCode().equals(code)) {
-            throw new IllegalArgumentException("Invalid verification code");
-        }
-
-        user.setEmailVerified(true);
-        user.setEnabled(true);
-        user.setVerificationCode(null);
-        user.setVerificationCodeExpiresAt(null);
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
+        User user = findUserByEmail(email);
+        validateVerificationCode(user, code);
+        return activateUser(user);
     }
 
     public User updateProfile(User user, String firstName,
@@ -70,6 +55,29 @@ public class UserService {
             throw new IllegalArgumentException("Old password is incorrect");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(user);
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    private void validateVerificationCode(User user, String code) {
+        if (user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Verification code expired");
+        }
+        if (!user.getVerificationCode().equals(code)) {
+            throw new IllegalArgumentException("Invalid verification code");
+        }
+    }
+
+    private User activateUser(User user) {
+        user.setEmailVerified(true);
+        user.setEnabled(true);
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
