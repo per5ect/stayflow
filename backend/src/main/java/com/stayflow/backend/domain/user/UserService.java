@@ -19,7 +19,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public User register(String firstName, String lastName,
-                         String email, String password, UserRole role) {
+                         String email, String password,String phoneNumber, UserRole role) {
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException("Email already exists");
         }
@@ -28,6 +28,7 @@ public class UserService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
+                .phoneNumber(phoneNumber)
                 .password(passwordEncoder.encode(password))
                 .role(role)
                 .emailVerified(false)

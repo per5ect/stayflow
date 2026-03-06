@@ -56,7 +56,7 @@ class UserServiceTest {
         when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         User result = userService.register(
-                "Petr", "Svoboda", "petr@test.com", "plainPassword", UserRole.RENTER);
+                "Petr", "Svoboda", "petr@test.com", "plainPassword", "+420123456789", UserRole.RENTER);
 
         assertNotNull(result);
         assertEquals("hashedPassword", result.getPassword());
@@ -68,12 +68,13 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldThrowException_whenEmailAlreadyExists() {
+    void shouldThrowUserAlreadyExistsException_whenEmailAlreadyRegistered() {
         when(userRepository.existsByEmail("petr@test.com")).thenReturn(true);
 
         assertThrows(UserAlreadyExistsException.class, () ->
                 userService.register(
-                        "Petr", "Svoboda", "petr@test.com", "plainPassword", UserRole.RENTER));
+                        "Petr", "Svoboda", "petr@test.com",
+                        "plainPassword", "+420123456789", UserRole.RENTER));
     }
 
     @Test
