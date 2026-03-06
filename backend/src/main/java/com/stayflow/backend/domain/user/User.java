@@ -45,6 +45,7 @@ public class User implements UserDetails {
     @Column(name = "photo_url", length = 500)
     private String photoUrl;
 
+    @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
@@ -54,12 +55,15 @@ public class User implements UserDetails {
     @Column(name = "verification_code_expires_at")
     private LocalDateTime verificationCodeExpiresAt;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean enabled = false;
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder.Default
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
