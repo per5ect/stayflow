@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -102,5 +103,28 @@ public class ReservationService {
             throw new InvalidReservationException(
                     "Cannot cancel reservation less than 24 hours before check-in");
         }
+    }
+
+    public Reservation getById(Long id) {
+        return reservationRepository.findById(id)
+                .orElseThrow(() -> new InvalidReservationException("Reservation not found"));
+    }
+
+    public List<Reservation> getRenterReservations(Long renterId) {
+        return reservationRepository.findByRenterId(renterId);
+    }
+
+    public List<Reservation> getLandlordReservations(Long landlordId) {
+        return reservationRepository.findByApartmentLandlordId(landlordId);
+    }
+
+    public Reservation approveReservation(Reservation reservation, User landlord, String message) {
+        reservation.setStatus(ReservationStatus.APPROVED);
+        return reservationRepository.save(reservation);
+    }
+
+    public Reservation declineReservation(Reservation reservation, User landlord, String message) {
+        reservation.setStatus(ReservationStatus.DECLINED);
+        return reservationRepository.save(reservation);
     }
 }

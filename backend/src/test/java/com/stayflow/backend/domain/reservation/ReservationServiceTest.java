@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +33,7 @@ class ReservationServiceTest {
     private User renter;
     private User landlord;
     private Apartment apartment;
+    private Reservation reservation;
 
     @BeforeEach
     void setUp() {
@@ -54,6 +57,16 @@ class ReservationServiceTest {
                 .title("Nice apartment")
                 .pricePerNight(BigDecimal.valueOf(100))
                 .status(ApartmentStatus.ACTIVE)
+                .build();
+
+        reservation = Reservation.builder()
+                .id(1L)
+                .renter(renter)
+                .apartment(apartment)
+                .checkIn(LocalDate.of(2025, 7, 1))
+                .checkOut(LocalDate.of(2025, 7, 5))
+                .status(ReservationStatus.PENDING)
+                .totalPrice(BigDecimal.valueOf(400))
                 .build();
     }
 
@@ -171,5 +184,64 @@ class ReservationServiceTest {
         Reservation result = reservationService.cancelReservation(reservation);
 
         assertEquals(ReservationStatus.CANCELLED, result.getStatus());
+    }
+
+
+    @Test
+    void shouldReturnReservation_whenIdExists() {
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        Reservation result = reservationService.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+    }
+
+    @Test
+    void shouldThrowException_whenReservationNotFound() {
+        when(reservationRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.getById(99L));
+    }
+
+    @Test
+    void shouldReturnRenterReservations() {
+        when(reservationRepository.findByRenterId(1L)).thenReturn(List.of(reservation));
+
+        List<Reservation> result = reservationService.getRenterReservations(1L);
+
+        assertEquals(1, result.size());
+        verify(reservationRepository).findByRenterId(1L);
+    }
+
+    @Test
+    void shouldReturnLandlordReservations() {
+        when(reservationRepository.findByApartmentLandlordId(1L)).thenReturn(List.of(reservation));
+
+        List<Reservation> result = reservationService.getLandlordReservations(1L);
+
+        assertEquals(1, result.size());
+        verify(reservationRepository).findByApartmentLandlordId(1L);
+    }
+
+    @Test
+    void shouldApproveReservation() {
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Reservation result = reservationService.approveReservation(reservation, landlord, "Welcome!");
+
+        assertEquals(ReservationStatus.APPROVED, result.getStatus());
+        verify(reservationRepository).save(reservation);
+    }
+
+    @Test
+    void shouldDeclineReservation() {
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Reservation result = reservationService.declineReservation(reservation, landlord, "Sorry");
+
+        assertEquals(ReservationStatus.DECLINED, result.getStatus());
+        verify(reservationRepository).save(reservation);
     }
 }
