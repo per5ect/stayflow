@@ -120,11 +120,15 @@ public class ReservationService {
 
     public Reservation approveReservation(Reservation reservation, User landlord, String message) {
         reservation.setStatus(ReservationStatus.APPROVED);
+        reservation.setLandlordMessage(message);
+        reservation.setUpdatedAt(LocalDateTime.now());
         return reservationRepository.save(reservation);
     }
 
     public Reservation declineReservation(Reservation reservation, User landlord, String message) {
         reservation.setStatus(ReservationStatus.DECLINED);
+        reservation.setLandlordMessage(message);
+        reservation.setUpdatedAt(LocalDateTime.now());
         return reservationRepository.save(reservation);
     }
 }

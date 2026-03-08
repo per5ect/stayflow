@@ -232,6 +232,7 @@ class ReservationServiceTest {
         Reservation result = reservationService.approveReservation(reservation, landlord, "Welcome!");
 
         assertEquals(ReservationStatus.APPROVED, result.getStatus());
+        assertEquals("Welcome!", result.getLandlordMessage());
         verify(reservationRepository).save(reservation);
     }
 
@@ -242,6 +243,7 @@ class ReservationServiceTest {
         Reservation result = reservationService.declineReservation(reservation, landlord, "Sorry");
 
         assertEquals(ReservationStatus.DECLINED, result.getStatus());
+        assertEquals("Sorry", result.getLandlordMessage());
         verify(reservationRepository).save(reservation);
     }
 }
