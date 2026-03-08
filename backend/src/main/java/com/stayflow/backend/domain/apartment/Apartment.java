@@ -51,9 +51,11 @@ public class Apartment {
     private Integer roomsCount;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "apartment_type", nullable = false)
     private ApartmentType apartmentType;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApartmentStatus status = ApartmentStatus.ACTIVE;
@@ -63,13 +65,15 @@ public class Apartment {
     @Column(name = "photo_urls", columnDefinition = "TEXT[]")
     private String[] photoUrls;
 
-    @OneToMany(mappedBy = "apartment", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @OneToMany(mappedBy = "apartment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApartmentAvailableDates> availableDates = new ArrayList<>();
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder.Default
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 }

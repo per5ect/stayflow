@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -64,7 +65,6 @@ class ApartmentServiceTest {
                 .status(ApartmentStatus.ACTIVE)
                 .build();
     }
-
 
     @Test
     void shouldCreateApartment_whenDataIsValid() {
@@ -127,7 +127,6 @@ class ApartmentServiceTest {
                 apartmentService.getById(99L));
     }
 
-
     @Test
     void shouldUpdateApartment_whenLandlordIsOwner() {
         when(apartmentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -172,5 +171,31 @@ class ApartmentServiceTest {
     void shouldThrowException_whenNonOwnerTriesToDeactivate() {
         assertThrows(UnauthorizedException.class, () ->
                 apartmentService.deactivateApartment(apartment, otherUser));
+    }
+
+    @Test
+    void shouldReturnOnlyActiveApartments() {
+        when(apartmentRepository.findByStatus(ApartmentStatus.ACTIVE))
+                .thenReturn(List.of(Apartment.builder()
+                        .id(1L)
+                        .status(ApartmentStatus.ACTIVE)
+                        .build()));
+
+        List<Apartment> result = apartmentService.getAllActive();
+
+        assertEquals(1, result.size());
+        assertEquals(ApartmentStatus.ACTIVE, result.get(0).getStatus());
+        verify(apartmentRepository).findByStatus(ApartmentStatus.ACTIVE);
+    }
+
+    @Test
+    void shouldReturnEmpty_whenNoActiveApartments() {
+        when(apartmentRepository.findByStatus(ApartmentStatus.ACTIVE))
+                .thenReturn(List.of());
+
+        List<Apartment> result = apartmentService.getAllActive();
+
+        assertTrue(result.isEmpty());
+        verify(apartmentRepository).findByStatus(ApartmentStatus.ACTIVE);
     }
 }
