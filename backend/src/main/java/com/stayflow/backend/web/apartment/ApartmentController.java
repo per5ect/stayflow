@@ -148,7 +148,6 @@ public class ApartmentController {
     @PreAuthorize("hasRole('LANDLORD')")
     public ResponseEntity<String> removeAvailability(
             @AuthenticationPrincipal User user,
-            @PathVariable Long id,
             @PathVariable Long availabilityId) {
         apartmentService.removeAvailability(availabilityId, user);
         return ResponseEntity.ok("Availability removed successfully!");
