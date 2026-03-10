@@ -131,4 +131,16 @@ public class ReservationService {
         reservation.setUpdatedAt(LocalDateTime.now());
         return reservationRepository.save(reservation);
     }
+
+    public List<Reservation> findAll() {
+        return reservationRepository.findAll();
+    }
+
+    public long countAll() {
+        return reservationRepository.count();
+    }
+
+    public long countByStatus(String status) {
+        return reservationRepository.countByStatus(ReservationStatus.valueOf(status));
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Random;
 
 @Service
@@ -89,5 +90,25 @@ public class UserService {
 
     private String generateVerificationCode() {
         return String.format("%06d", new Random().nextInt(999999));
+    }
+
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    public long countAll() {
+        return userRepository.count();
+    }
+
+    public long countByRole(String role) {
+        return userRepository.countByRole(UserRole.valueOf(role));
+    }
+
+    public void deleteUser(Long id) {
+        User user = findUserByEmail(
+                userRepository.findById(id)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"))
+                        .getEmail());
+        userRepository.delete(user);
     }
 }

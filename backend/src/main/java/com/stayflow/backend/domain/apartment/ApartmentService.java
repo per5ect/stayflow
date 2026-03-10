@@ -98,4 +98,16 @@ public class ApartmentService {
     public List<Apartment> getAllActive() {
         return apartmentRepository.findByStatus(ApartmentStatus.ACTIVE);
     }
+
+    public List<Apartment> findAll() {
+        return apartmentRepository.findAll();
+    }
+
+    public long countAll() {
+        return apartmentRepository.count();
+    }
+
+    public long countActive() {
+        return apartmentRepository.countByStatus(ApartmentStatus.ACTIVE);
+    }
 }

@@ -21,8 +21,6 @@ public class ApartmentController {
 
     private final ApartmentService apartmentService;
 
-    // ── Публичные endpoints ─────────────────────────────────────────────────
-
     @GetMapping
     public ResponseEntity<List<ApartmentResponse>> getAll() {
         List<ApartmentResponse> apartments = apartmentService
@@ -38,7 +36,6 @@ public class ApartmentController {
         return ResponseEntity.ok(ApartmentResponse.from(apartmentService.getById(id)));
     }
 
-    // ── LANDLORD endpoints ──────────────────────────────────────────────────
 
     @PostMapping
     @PreAuthorize("hasRole('LANDLORD')")

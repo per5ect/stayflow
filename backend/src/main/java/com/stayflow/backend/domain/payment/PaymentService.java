@@ -95,4 +95,20 @@ public class PaymentService {
     public List<Payment> getLandlordPayments(Long landlordId) {
         return paymentRepository.findByLandlordId(landlordId);
     }
+
+    public List<Payment> findAll() {
+        return paymentRepository.findAll();
+    }
+
+    public long countAll() {
+        return paymentRepository.count();
+    }
+
+    public BigDecimal getTotalRevenue() {
+        return paymentRepository.sumAmount();
+    }
+
+    public BigDecimal getTotalCommission() {
+        return paymentRepository.sumCommission();
+    }
 }
