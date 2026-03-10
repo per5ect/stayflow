@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +31,7 @@ class PaymentServiceTest {
     private User renter;
     private User landlord;
     private Reservation reservation;
+    private Payment payment;
 
     @BeforeEach
     void setUp() {
@@ -54,6 +56,21 @@ class PaymentServiceTest {
                 .status(ReservationStatus.APPROVED)
                 .checkIn(LocalDate.now().plusDays(5))
                 .checkOut(LocalDate.now().plusDays(10))
+                .build();
+
+        payment = Payment.builder()
+                .id(1L)
+                .renter(renter)
+                .landlord(landlord)
+                .reservation(reservation)
+                .amount(BigDecimal.valueOf(1000))
+                .commission(BigDecimal.valueOf(100))
+                .landlordPayout(BigDecimal.valueOf(900))
+                .status(PaymentStatus.COMPLETED)
+                .cardLastFour("4242")
+                .cardBrand("VISA")
+                .transactionId("TXN-123")
+                .receiptNumber("RCP-123")
                 .build();
     }
 
@@ -170,5 +187,33 @@ class PaymentServiceTest {
 
         assertNotEquals(payment1.getReceiptNumber(), payment2.getReceiptNumber());
     }
+
+    @Test
+    void shouldReturnRenterPayments() {
+        // ARRANGE
+        when(paymentRepository.findByRenterId(1L)).thenReturn(List.of(payment));
+
+        // ACT
+        List<Payment> result = paymentService.getRenterPayments(1L);
+
+        // ASSERT
+        assertEquals(1, result.size());
+        verify(paymentRepository).findByRenterId(1L);
+    }
+
+    @Test
+    void shouldReturnLandlordPayments() {
+        // ARRANGE
+        when(paymentRepository.findByLandlordId(1L)).thenReturn(List.of(payment));
+
+        // ACT
+        List<Payment> result = paymentService.getLandlordPayments(1L);
+
+        // ASSERT
+        assertEquals(1, result.size());
+        verify(paymentRepository).findByLandlordId(1L);
+    }
+
+
 }
 
