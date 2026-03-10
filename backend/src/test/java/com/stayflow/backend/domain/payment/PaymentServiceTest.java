@@ -244,5 +244,42 @@ class PaymentServiceTest {
         assertThrows(PaymentException.class, () ->
                 paymentService.processPayment(reservation, landlord, "4242", "VISA"));
     }
+
+    @Test
+    void shouldReturnAllPayments() {
+        when(paymentRepository.findAll()).thenReturn(List.of(payment));
+
+        List<Payment> result = paymentService.findAll();
+
+        assertEquals(1, result.size());
+        verify(paymentRepository).findAll();
+    }
+
+    @Test
+    void shouldCountAllPayments() {
+        when(paymentRepository.count()).thenReturn(2L);
+
+        long result = paymentService.countAll();
+
+        assertEquals(2L, result);
+    }
+
+    @Test
+    void shouldReturnTotalRevenue() {
+        when(paymentRepository.sumAmount()).thenReturn(BigDecimal.valueOf(5000));
+
+        BigDecimal result = paymentService.getTotalRevenue();
+
+        assertEquals(BigDecimal.valueOf(5000), result);
+    }
+
+    @Test
+    void shouldReturnTotalCommission() {
+        when(paymentRepository.sumCommission()).thenReturn(BigDecimal.valueOf(500));
+
+        BigDecimal result = paymentService.getTotalCommission();
+
+        assertEquals(BigDecimal.valueOf(500), result);
+    }
 }
 

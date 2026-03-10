@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -139,5 +140,37 @@ class UserServiceTest {
 
         assertThrows(InvalidPasswordException.class, () ->
                 userService.changePassword(existingUser, "wrongPassword", "newPassword"));
+    }
+
+    @Test
+    void shouldReturnAllUsers() {
+        when(userRepository.findAll()).thenReturn(List.of(
+                User.builder().id(1L).email("user1@test.com").build(),
+                User.builder().id(2L).email("user2@test.com").build()
+        ));
+
+        List<User> result = userService.findAll();
+
+        assertEquals(2, result.size());
+        verify(userRepository).findAll();
+    }
+
+    @Test
+    void shouldCountAllUsers() {
+        // ARRANGE
+        when(userRepository.count()).thenReturn(5L);
+
+        long result = userService.countAll();
+
+        assertEquals(5L, result);
+    }
+
+    @Test
+    void shouldCountUsersByRole() {
+        when(userRepository.countByRole(UserRole.RENTER)).thenReturn(3L);
+
+        long result = userService.countByRole("RENTER");
+
+        assertEquals(3L, result);
     }
 }

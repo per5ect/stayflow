@@ -198,4 +198,32 @@ class ApartmentServiceTest {
         assertTrue(result.isEmpty());
         verify(apartmentRepository).findByStatus(ApartmentStatus.ACTIVE);
     }
+
+    @Test
+    void shouldReturnAllApartments() {
+        when(apartmentRepository.findAll()).thenReturn(List.of(apartment));
+
+        List<Apartment> result = apartmentService.findAll();
+
+        assertEquals(1, result.size());
+        verify(apartmentRepository).findAll();
+    }
+
+    @Test
+    void shouldCountAllApartments() {
+        when(apartmentRepository.count()).thenReturn(3L);
+
+        long result = apartmentService.countAll();
+
+        assertEquals(3L, result);
+    }
+
+    @Test
+    void shouldCountActiveApartments() {
+        when(apartmentRepository.countByStatus(ApartmentStatus.ACTIVE)).thenReturn(2L);
+
+        long result = apartmentService.countActive();
+
+        assertEquals(2L, result);
+    }
 }

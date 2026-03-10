@@ -246,4 +246,32 @@ class ReservationServiceTest {
         assertEquals("Sorry", result.getLandlordMessage());
         verify(reservationRepository).save(reservation);
     }
+
+    @Test
+    void shouldReturnAllReservations() {
+        when(reservationRepository.findAll()).thenReturn(List.of(reservation));
+
+        List<Reservation> result = reservationService.findAll();
+
+        assertEquals(1, result.size());
+        verify(reservationRepository).findAll();
+    }
+
+    @Test
+    void shouldCountAllReservations() {
+        when(reservationRepository.count()).thenReturn(4L);
+
+        long result = reservationService.countAll();
+
+        assertEquals(4L, result);
+    }
+
+    @Test
+    void shouldCountReservationsByStatus() {
+        when(reservationRepository.countByStatus(ReservationStatus.PENDING)).thenReturn(2L);
+
+        long result = reservationService.countByStatus("PENDING");
+
+        assertEquals(2L, result);
+    }
 }
