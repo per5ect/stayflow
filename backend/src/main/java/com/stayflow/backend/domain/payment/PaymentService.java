@@ -2,6 +2,8 @@ package com.stayflow.backend.domain.payment;
 
 import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.domain.reservation.Reservation;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
+import com.stayflow.backend.domain.reservation.ReservationStatus;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -16,13 +19,28 @@ import java.util.UUID;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final ReservationRepository reservationRepository;
 
     private static final BigDecimal COMMISSION_RATE = BigDecimal.valueOf(0.10);
 
     public Payment processPayment(Reservation reservation, User landlord,
                                   String cardLastFour, String cardBrand) {
+        if (reservation.getStatus() == ReservationStatus.PAID) {
+            throw new PaymentException("Reservation is already paid");
+        }
+
+        if (reservation.getStatus() != ReservationStatus.APPROVED) {
+            throw new PaymentException("Reservation must be approved before payment");
+        }
+
         Payment payment = buildPayment(reservation, landlord, cardLastFour, cardBrand);
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+
+        reservation.setStatus(ReservationStatus.PAID);
+        reservation.setUpdatedAt(LocalDateTime.now());
+        reservationRepository.save(reservation);
+
+        return saved;
     }
 
     public Payment refundPayment(Payment payment) {
@@ -68,5 +86,13 @@ public class PaymentService {
 
     private String generateReceiptNumber() {
         return "RCP-" + UUID.randomUUID().toString().toUpperCase();
+    }
+
+    public List<Payment> getRenterPayments(Long renterId) {
+        return paymentRepository.findByRenterId(renterId);
+    }
+
+    public List<Payment> getLandlordPayments(Long landlordId) {
+        return paymentRepository.findByLandlordId(landlordId);
     }
 }

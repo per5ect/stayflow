@@ -4,6 +4,8 @@ import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,7 +44,9 @@ public class Payment {
     @Column(name = "landlord_payout", nullable = false, precision = 10, scale = 2)
     private BigDecimal landlordPayout;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     private PaymentStatus status = PaymentStatus.PENDING;
 
@@ -64,6 +68,7 @@ public class Payment {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }
