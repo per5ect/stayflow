@@ -24,6 +24,7 @@ public class ApartmentResponse {
     private String city;
     private String country;
     private Integer roomsCount;
+    private String[] photoUrls;
     private ApartmentType apartmentType;
     private ApartmentStatus status;
     private String landlordName;
@@ -39,6 +40,7 @@ public class ApartmentResponse {
                 .city(apartment.getCity())
                 .country(apartment.getCountry())
                 .roomsCount(apartment.getRoomsCount())
+                .photoUrls(apartment.getPhotoUrls())
                 .apartmentType(apartment.getApartmentType())
                 .status(apartment.getStatus())
                 .landlordName(apartment.getLandlord().getFirstName()

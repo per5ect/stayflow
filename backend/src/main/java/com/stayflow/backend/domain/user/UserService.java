@@ -4,6 +4,7 @@ import com.stayflow.backend.common.exception.user.InvalidPasswordException;
 import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
 import com.stayflow.backend.common.exception.user.UserNotFoundException;
+import com.stayflow.backend.infrastructure.storage.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
+
 
     public User register(String firstName, String lastName,
                          String email, String password,String phoneNumber, UserRole role) {
@@ -119,5 +122,14 @@ public class UserService {
                 role,
                 email,
                 pageable);
+    }
+
+    public User updateAvatar(User user, String photoUrl) {
+        if (user.getPhotoUrl() != null) {
+            cloudinaryService.deleteImage(user.getPhotoUrl());
+        }
+        user.setPhotoUrl(photoUrl);
+        user.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(user);
     }
 }

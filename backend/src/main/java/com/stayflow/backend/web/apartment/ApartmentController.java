@@ -5,6 +5,7 @@ import com.stayflow.backend.domain.apartment.ApartmentAvailableDates;
 import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.apartment.ApartmentType;
 import com.stayflow.backend.domain.user.User;
+import com.stayflow.backend.infrastructure.storage.CloudinaryService;
 import com.stayflow.backend.web.apartment.dto.ApartmentRequest;
 import com.stayflow.backend.web.apartment.dto.ApartmentResponse;
 import com.stayflow.backend.web.common.SortUtils;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +31,8 @@ import java.util.List;
 public class ApartmentController {
 
     private final ApartmentService apartmentService;
+    private final CloudinaryService cloudinaryService;
+
 
     @GetMapping
     public ResponseEntity<Page<ApartmentResponse>> getAll(
@@ -159,4 +163,27 @@ public class ApartmentController {
         return ResponseEntity.ok(apartmentService.getAvailability(id));
     }
 
+    @PostMapping("/{id}/photos")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<ApartmentResponse> addPhotos(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files) {
+        Apartment apartment = apartmentService.getById(id);
+        List<String> urls = cloudinaryService.uploadImages(files, "apartments/" + id);
+        Apartment updated = apartmentService.addPhotos(apartment, user, urls);
+        return ResponseEntity.ok(ApartmentResponse.from(updated));
+    }
+
+    @DeleteMapping("/{id}/photos")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<ApartmentResponse> deletePhoto(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam String photoUrl) {
+        Apartment apartment = apartmentService.getById(id);
+        cloudinaryService.deleteImage(photoUrl);
+        Apartment updated = apartmentService.deletePhoto(apartment, user, photoUrl);
+        return ResponseEntity.ok(ApartmentResponse.from(updated));
+    }
 }

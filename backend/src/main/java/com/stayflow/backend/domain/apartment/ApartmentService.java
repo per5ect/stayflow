@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -188,5 +190,26 @@ public class ApartmentService {
 
     public List<ApartmentAvailableDates> getAvailability(Long apartmentId) {
         return apartmentAvailableDatesRepository.findByApartmentId(apartmentId);
+    }
+
+    public Apartment addPhotos(Apartment apartment, User landlord, List<String> newUrls) {
+        validateOwnership(apartment, landlord);
+        String[] existing = apartment.getPhotoUrls() != null ? apartment.getPhotoUrls() : new String[0];
+        List<String> merged = new ArrayList<>(List.of(existing));
+        merged.addAll(newUrls);
+        apartment.setPhotoUrls(merged.toArray(new String[0]));
+        apartment.setUpdatedAt(LocalDateTime.now());
+        return apartmentRepository.save(apartment);
+    }
+
+    public Apartment deletePhoto(Apartment apartment, User landlord, String photoUrl) {
+        validateOwnership(apartment, landlord);
+        if (apartment.getPhotoUrls() == null) return apartment;
+        String[] updated = Arrays.stream(apartment.getPhotoUrls())
+                .filter(url -> !url.equals(photoUrl))
+                .toArray(String[]::new);
+        apartment.setPhotoUrls(updated);
+        apartment.setUpdatedAt(LocalDateTime.now());
+        return apartmentRepository.save(apartment);
     }
 }
