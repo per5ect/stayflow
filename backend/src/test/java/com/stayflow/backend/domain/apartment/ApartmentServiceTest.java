@@ -1,5 +1,6 @@
 package com.stayflow.backend.domain.apartment;
 
+import com.stayflow.backend.common.exception.apartment.ApartmentAvailabilityNotFoundException;
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +27,9 @@ class ApartmentServiceTest {
 
     @Mock
     private ApartmentRepository apartmentRepository;
+
+    @Mock
+    private ApartmentAvailableDatesRepository apartmentAvailableDatesRepository;
 
     @InjectMocks
     private ApartmentService apartmentService;
@@ -225,5 +230,73 @@ class ApartmentServiceTest {
         long result = apartmentService.countActive();
 
         assertEquals(2L, result);
+    }
+
+    @Test
+    void shouldAddAvailability_whenOwner() {
+        LocalDate from = LocalDate.of(2026, 6, 1);
+        LocalDate to = LocalDate.of(2026, 9, 30);
+        when(apartmentAvailableDatesRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        ApartmentAvailableDates result = apartmentService.addAvailability(apartment, landlord, from, to);
+
+        assertEquals(from, result.getAvailableFrom());
+        assertEquals(to, result.getAvailableTo());
+        verify(apartmentAvailableDatesRepository).save(any());
+    }
+
+    @Test
+    void shouldThrowException_whenNonOwnerAddsAvailability() {
+        User otherUser = User.builder().id(99L).build();
+        LocalDate from = LocalDate.of(2026, 6, 1);
+        LocalDate to = LocalDate.of(2026, 9, 30);
+
+        assertThrows(UnauthorizedException.class, () ->
+                apartmentService.addAvailability(apartment, otherUser, from, to));
+    }
+
+    @Test
+    void shouldThrowException_whenFromIsAfterTo() {
+        LocalDate from = LocalDate.of(2026, 9, 30);
+        LocalDate to = LocalDate.of(2026, 6, 1);
+
+        assertThrows(InvalidApartmentDataException.class, () ->
+                apartmentService.addAvailability(apartment, landlord, from, to));
+    }
+
+    @Test
+    void shouldRemoveAvailability_whenOwner() {
+        ApartmentAvailableDates dates = ApartmentAvailableDates.builder()
+                .id(1L)
+                .apartment(apartment)
+                .availableFrom(LocalDate.of(2026, 6, 1))
+                .availableTo(LocalDate.of(2026, 9, 30))
+                .build();
+        when(apartmentAvailableDatesRepository.findById(1L)).thenReturn(Optional.of(dates));
+
+        apartmentService.removeAvailability(1L, landlord);
+
+        verify(apartmentAvailableDatesRepository).delete(dates);
+    }
+
+    @Test
+    void shouldThrowException_whenNonOwnerRemovesAvailability() {
+        User otherUser = User.builder().id(99L).build();
+        ApartmentAvailableDates dates = ApartmentAvailableDates.builder()
+                .id(1L)
+                .apartment(apartment)
+                .build();
+        when(apartmentAvailableDatesRepository.findById(1L)).thenReturn(Optional.of(dates));
+
+        assertThrows(UnauthorizedException.class, () ->
+                apartmentService.removeAvailability(1L, otherUser));
+    }
+
+    @Test
+    void shouldThrowException_whenAvailabilityNotFound() {
+        when(apartmentAvailableDatesRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ApartmentAvailabilityNotFoundException.class, () ->
+                apartmentService.removeAvailability(99L, landlord));
     }
 }
