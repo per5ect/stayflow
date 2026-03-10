@@ -32,14 +32,13 @@ class PaymentServiceTest {
     @InjectMocks
     private PaymentService paymentService;
 
-    private User renter;
     private User landlord;
     private Reservation reservation;
     private Payment payment;
 
     @BeforeEach
     void setUp() {
-        renter = User.builder()
+        User renter = User.builder()
                 .id(1L)
                 .firstName("Petr")
                 .lastName("Svoboda")

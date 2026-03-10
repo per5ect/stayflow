@@ -3,14 +3,12 @@ package com.stayflow.backend.domain.apartment;
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.apartment.UnauthorizedException;
-import com.stayflow.backend.common.exception.user.UserNotFoundException;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 @Service

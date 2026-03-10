@@ -2,9 +2,7 @@ package com.stayflow.backend.web.admin;
 
 import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentService;
-import com.stayflow.backend.domain.payment.Payment;
 import com.stayflow.backend.domain.payment.PaymentService;
-import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.reservation.ReservationService;
 import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.domain.user.UserService;
