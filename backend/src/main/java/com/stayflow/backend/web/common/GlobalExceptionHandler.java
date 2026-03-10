@@ -3,6 +3,7 @@ package com.stayflow.backend.web.common;
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.apartment.UnauthorizedException;
+import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.common.exception.user.InvalidPasswordException;
@@ -78,6 +79,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidReservationException.class)
     public ResponseEntity<ErrorResponse> handleInvalidReservation(InvalidReservationException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ErrorResponse> handlePayment(PaymentException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
