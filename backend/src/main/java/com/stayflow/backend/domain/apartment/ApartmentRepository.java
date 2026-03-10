@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -18,7 +19,7 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
     long countByStatus(ApartmentStatus status);
 
     @Query("SELECT a FROM Apartment a WHERE a.status = com.stayflow.backend.domain.apartment.ApartmentStatus.ACTIVE " +
-            "AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%'))) " +
+            "AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', CAST(:city AS string), '%'))) " +
             "AND (:minPrice IS NULL OR a.pricePerNight >= :minPrice) " +
             "AND (:maxPrice IS NULL OR a.pricePerNight <= :maxPrice) " +
             "AND (:minRooms IS NULL OR a.roomsCount >= :minRooms) " +
@@ -38,7 +39,7 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
 
     @Query("SELECT a FROM Apartment a WHERE " +
             "(:status IS NULL OR CAST(a.status AS string) = :status) " +
-            "AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')))")
+            "AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', CAST(:city AS string), '%')))")
     Page<Apartment> findAllWithFilters(@Param("status") String status,
                                        @Param("city") String city,
                                        Pageable pageable);

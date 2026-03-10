@@ -1,15 +1,19 @@
 package com.stayflow.backend.domain.apartment;
 
+import com.stayflow.backend.common.exception.apartment.ApartmentAvailabilityNotFoundException;
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,6 +22,8 @@ import java.util.List;
 public class ApartmentService {
 
     private final ApartmentRepository apartmentRepository;
+    private final ApartmentAvailableDatesRepository apartmentAvailableDatesRepository;
+    private final ReservationRepository reservationRepository;
 
     public Apartment createApartment(User landlord, String title, String description,
                                      BigDecimal pricePerNight, String street, String city,
@@ -108,12 +114,37 @@ public class ApartmentService {
     }
 
     public Page<Apartment> findWithFilters(String city, BigDecimal minPrice,
-                                           BigDecimal maxPrice, Integer minRooms,
-                                           ApartmentType type, Pageable pageable) {
-        return apartmentRepository.findWithFilters(
+                                            BigDecimal maxPrice, Integer minRooms,
+                                            ApartmentType type, LocalDate checkIn,
+                                            LocalDate checkOut, Pageable pageable) {
+        if (checkIn == null || checkOut == null) {
+            return apartmentRepository.findWithFilters(
+                    city, minPrice, maxPrice, minRooms,
+                    type != null ? type.name() : null,
+                    pageable);
+        }
+
+        List<Apartment> all = apartmentRepository.findWithFilters(
                 city, minPrice, maxPrice, minRooms,
                 type != null ? type.name() : null,
-                pageable);
+                Pageable.unpaged()).getContent();
+
+        List<Apartment> filtered = all.stream()
+                .filter(a -> {
+                    boolean available = apartmentAvailableDatesRepository.existsAvailability(
+                            a.getId(), checkIn, checkOut);
+                    boolean noConflict = !reservationRepository.existsOverlapping(
+                            a.getId(), checkIn, checkOut);
+                    return available && noConflict;
+                })
+                .toList();
+
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        List<Apartment> page = start >= filtered.size() ? List.of() : filtered.subList(start, end);
+
+        return new PageImpl<>(page, pageable, filtered.size());
     }
 
     public Page<Apartment> findByLandlordWithFilters(Long landlordId, String status, Pageable pageable) {
@@ -128,5 +159,34 @@ public class ApartmentService {
                 status,
                 city,
                 pageable);
+    }
+
+    public ApartmentAvailableDates addAvailability(Apartment apartment, User landlord,
+                                                   LocalDate from, LocalDate to) {
+        if (!apartment.getLandlord().getId().equals(landlord.getId())) {
+            throw new UnauthorizedException("You can only add availability for your apartments");
+        }
+        if (from.isAfter(to)) {
+            throw new InvalidApartmentDataException("Available from must be before available to");
+        }
+        ApartmentAvailableDates dates = ApartmentAvailableDates.builder()
+                .apartment(apartment)
+                .availableFrom(from)
+                .availableTo(to)
+                .build();
+        return apartmentAvailableDatesRepository.save(dates);
+    }
+
+    public void removeAvailability(Long availabilityId, User landlord) {
+        ApartmentAvailableDates dates = apartmentAvailableDatesRepository.findById(availabilityId)
+                .orElseThrow(() -> new ApartmentAvailabilityNotFoundException("Availability not found"));
+        if (!dates.getApartment().getLandlord().getId().equals(landlord.getId())) {
+            throw new UnauthorizedException("You can only remove availability for your apartments");
+        }
+        apartmentAvailableDatesRepository.delete(dates);
+    }
+
+    public List<ApartmentAvailableDates> getAvailability(Long apartmentId) {
+        return apartmentAvailableDatesRepository.findByApartmentId(apartmentId);
     }
 }

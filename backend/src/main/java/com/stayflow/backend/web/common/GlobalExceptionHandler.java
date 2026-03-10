@@ -1,5 +1,6 @@
 package com.stayflow.backend.web.common;
 
+import com.stayflow.backend.common.exception.apartment.ApartmentAvailabilityNotFoundException;
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
@@ -85,6 +86,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentException.class)
     public ResponseEntity<ErrorResponse> handlePayment(PaymentException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ApartmentAvailabilityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleApartmentAvailabilityNotFound(
+            ApartmentAvailabilityNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {
