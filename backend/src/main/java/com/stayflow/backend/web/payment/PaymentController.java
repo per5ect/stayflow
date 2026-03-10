@@ -1,5 +1,6 @@
 package com.stayflow.backend.web.payment;
 
+import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.domain.payment.Payment;
 import com.stayflow.backend.domain.payment.PaymentService;
 import com.stayflow.backend.domain.reservation.Reservation;
@@ -30,6 +31,11 @@ public class PaymentController {
             @AuthenticationPrincipal User user,
             @Valid @RequestBody PaymentRequest request) {
         Reservation reservation = reservationService.getById(request.getReservationId());
+
+        if (!reservation.getRenter().getId().equals(user.getId())) {
+            throw new UnauthorizedException("You can only pay for your own reservations");
+        }
+
         Payment payment = paymentService.processPayment(
                 reservation,
                 reservation.getApartment().getLandlord(),

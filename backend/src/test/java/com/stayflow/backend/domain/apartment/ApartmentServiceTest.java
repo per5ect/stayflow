@@ -2,7 +2,7 @@ package com.stayflow.backend.domain.apartment;
 
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
-import com.stayflow.backend.common.exception.apartment.UnauthorizedException;
+import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.domain.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;

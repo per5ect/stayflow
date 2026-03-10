@@ -1,5 +1,6 @@
 package com.stayflow.backend.domain.reservation;
 
+import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.domain.apartment.Apartment;
@@ -164,24 +165,26 @@ class ReservationServiceTest {
     void shouldThrowException_whenCancellingLessThan24HoursBeforeCheckIn() {
         Reservation reservation = Reservation.builder()
                 .id(1L)
+                .renter(renter)
                 .checkIn(LocalDate.now())
                 .status(ReservationStatus.APPROVED)
                 .build();
 
         assertThrows(InvalidReservationException.class, () ->
-                reservationService.cancelReservation(reservation));
+                reservationService.cancelReservation(reservation, renter));
     }
 
     @Test
     void shouldCancelReservation_whenMoreThan24HoursBeforeCheckIn() {
         Reservation reservation = Reservation.builder()
                 .id(1L)
+                .renter(renter)
                 .checkIn(LocalDate.now().plusDays(5))
                 .status(ReservationStatus.APPROVED)
                 .build();
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Reservation result = reservationService.cancelReservation(reservation);
+        Reservation result = reservationService.cancelReservation(reservation, renter);
 
         assertEquals(ReservationStatus.CANCELLED, result.getStatus());
     }
@@ -273,5 +276,22 @@ class ReservationServiceTest {
         long result = reservationService.countByStatus("PENDING");
 
         assertEquals(2L, result);
+    }
+
+    @Test
+    void shouldThrowException_whenNonOwnerTriesToCancel() {
+        User otherUser = User.builder()
+                .id(99L)
+                .email("other@test.com")
+                .build();
+        Reservation reservation = Reservation.builder()
+                .id(1L)
+                .renter(renter)
+                .checkIn(LocalDate.now().plusDays(5))
+                .status(ReservationStatus.APPROVED)
+                .build();
+
+        assertThrows(UnauthorizedException.class, () ->
+                reservationService.cancelReservation(reservation, otherUser));
     }
 }

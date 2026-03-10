@@ -1,5 +1,6 @@
 package com.stayflow.backend.domain.reservation;
 
+import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.domain.apartment.Apartment;
@@ -41,7 +42,10 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
-    public Reservation cancelReservation(Reservation reservation) {
+    public Reservation cancelReservation(Reservation reservation , User renter) {
+        if (!reservation.getRenter().getId().equals(renter.getId())) {
+            throw new UnauthorizedException("You can only cancel your own reservations");
+        }
         validateCancellable(reservation);
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservation.setUpdatedAt(LocalDateTime.now());
@@ -119,6 +123,9 @@ public class ReservationService {
     }
 
     public Reservation approveReservation(Reservation reservation, User landlord, String message) {
+        if (!reservation.getApartment().getLandlord().getId().equals(landlord.getId())) {
+            throw new UnauthorizedException("You can only approve reservations for your apartments");
+        }
         reservation.setStatus(ReservationStatus.APPROVED);
         reservation.setLandlordMessage(message);
         reservation.setUpdatedAt(LocalDateTime.now());
@@ -126,6 +133,9 @@ public class ReservationService {
     }
 
     public Reservation declineReservation(Reservation reservation, User landlord, String message) {
+        if (!reservation.getApartment().getLandlord().getId().equals(landlord.getId())) {
+            throw new UnauthorizedException("You can only decline reservations for your apartments");
+        }
         reservation.setStatus(ReservationStatus.DECLINED);
         reservation.setLandlordMessage(message);
         reservation.setUpdatedAt(LocalDateTime.now());
