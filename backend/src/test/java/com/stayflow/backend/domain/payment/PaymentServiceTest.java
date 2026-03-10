@@ -2,6 +2,7 @@ package com.stayflow.backend.domain.payment;
 
 import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.domain.reservation.Reservation;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
 import com.stayflow.backend.domain.reservation.ReservationStatus;
 import com.stayflow.backend.domain.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,9 @@ class PaymentServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -152,6 +156,9 @@ class PaymentServiceTest {
 
         Payment payment1 = paymentService.processPayment(
                 reservation, landlord, "4242", "VISA");
+
+        reservation.setStatus(ReservationStatus.APPROVED);
+
         Payment payment2 = paymentService.processPayment(
                 reservation, landlord, "4242", "VISA");
 
@@ -182,6 +189,9 @@ class PaymentServiceTest {
 
         Payment payment1 = paymentService.processPayment(
                 reservation, landlord, "4242", "VISA");
+
+        reservation.setStatus(ReservationStatus.APPROVED);
+
         Payment payment2 = paymentService.processPayment(
                 reservation, landlord, "4242", "VISA");
 
@@ -190,30 +200,49 @@ class PaymentServiceTest {
 
     @Test
     void shouldReturnRenterPayments() {
-        // ARRANGE
         when(paymentRepository.findByRenterId(1L)).thenReturn(List.of(payment));
 
-        // ACT
         List<Payment> result = paymentService.getRenterPayments(1L);
 
-        // ASSERT
         assertEquals(1, result.size());
         verify(paymentRepository).findByRenterId(1L);
     }
 
     @Test
     void shouldReturnLandlordPayments() {
-        // ARRANGE
         when(paymentRepository.findByLandlordId(1L)).thenReturn(List.of(payment));
 
-        // ACT
         List<Payment> result = paymentService.getLandlordPayments(1L);
 
-        // ASSERT
         assertEquals(1, result.size());
         verify(paymentRepository).findByLandlordId(1L);
     }
 
+    @Test
+    void shouldUpdateReservationStatus_toPaid_afterPayment() {
+        when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        paymentService.processPayment(reservation, landlord, "4242", "VISA");
+
+        assertEquals(ReservationStatus.PAID, reservation.getStatus());
+        verify(reservationRepository).save(reservation);
+    }
+
+    @Test
+    void shouldThrowException_whenReservationAlreadyPaid() {
+        reservation.setStatus(ReservationStatus.PAID);
+
+        assertThrows(PaymentException.class, () ->
+                paymentService.processPayment(reservation, landlord, "4242", "VISA"));
+    }
+
+    @Test
+    void shouldThrowException_whenReservationNotApproved() {
+        reservation.setStatus(ReservationStatus.PENDING);
+
+        assertThrows(PaymentException.class, () ->
+                paymentService.processPayment(reservation, landlord, "4242", "VISA"));
+    }
 }
 
