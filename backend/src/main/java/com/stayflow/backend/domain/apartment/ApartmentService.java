@@ -5,6 +5,8 @@ import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataExcep
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,10 +44,6 @@ public class ApartmentService {
     public Apartment getById(Long id) {
         return apartmentRepository.findById(id)
                 .orElseThrow(() -> new ApartmentNotFoundException("Apartment not found"));
-    }
-
-    public List<Apartment> getLandlordApartments(Long landlordId) {
-        return apartmentRepository.findByLandlordId(landlordId);
     }
 
     public Apartment updateApartment(Apartment apartment, User user, String title,
@@ -107,5 +105,28 @@ public class ApartmentService {
 
     public long countActive() {
         return apartmentRepository.countByStatus(ApartmentStatus.ACTIVE);
+    }
+
+    public Page<Apartment> findWithFilters(String city, BigDecimal minPrice,
+                                           BigDecimal maxPrice, Integer minRooms,
+                                           ApartmentType type, Pageable pageable) {
+        return apartmentRepository.findWithFilters(
+                city, minPrice, maxPrice, minRooms,
+                type != null ? type.name() : null,
+                pageable);
+    }
+
+    public Page<Apartment> findByLandlordWithFilters(Long landlordId, String status, Pageable pageable) {
+        return apartmentRepository.findByLandlordIdWithFilters(
+                landlordId,
+                status,
+                pageable);
+    }
+
+    public Page<Apartment> findAllWithFilters(String status, String city, Pageable pageable) {
+        return apartmentRepository.findAllWithFilters(
+                status,
+                city,
+                pageable);
     }
 }

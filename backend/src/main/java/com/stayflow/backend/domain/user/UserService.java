@@ -5,6 +5,8 @@ import com.stayflow.backend.common.exception.user.InvalidVerificationCodeExcepti
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
 import com.stayflow.backend.common.exception.user.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -110,5 +112,12 @@ public class UserService {
                         .orElseThrow(() -> new UserNotFoundException("User not found"))
                         .getEmail());
         userRepository.delete(user);
+    }
+
+    public Page<User> findAllWithFilters(String role, String email, Pageable pageable) {
+        return userRepository.findAllWithFilters(
+                role,
+                email,
+                pageable);
     }
 }

@@ -1,23 +1,22 @@
 package com.stayflow.backend.web.admin;
 
-import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.payment.PaymentService;
 import com.stayflow.backend.domain.reservation.ReservationService;
-import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.domain.user.UserService;
 import com.stayflow.backend.web.admin.dto.AdminStatsResponse;
 import com.stayflow.backend.web.admin.dto.AdminUserResponse;
 import com.stayflow.backend.web.apartment.dto.ApartmentResponse;
+import com.stayflow.backend.web.common.SortUtils;
 import com.stayflow.backend.web.payment.dto.PaymentResponse;
 import com.stayflow.backend.web.reservation.dto.ReservationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -48,11 +47,18 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<AdminUserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.findAll()
-                .stream()
-                .map(AdminUserResponse::from)
-                .toList());
+    public ResponseEntity<Page<AdminUserResponse>> getAllUsers(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.USER_SORT_FIELDS);
+        Page<AdminUserResponse> users = userService
+                .findAllWithFilters(role, email, PageRequest.of(page, size, sort))
+                .map(AdminUserResponse::from);
+        return ResponseEntity.ok(users);
     }
 
     @DeleteMapping("/users/{id}")
@@ -62,35 +68,45 @@ public class AdminController {
     }
 
     @GetMapping("/apartments")
-    public ResponseEntity<List<ApartmentResponse>> getAllApartments() {
-        return ResponseEntity.ok(apartmentService.findAll()
-                .stream()
-                .map(ApartmentResponse::from)
-                .toList());
-    }
-
-    @PutMapping("/apartments/{id}/deactivate")
-    public ResponseEntity<ApartmentResponse> deactivateApartment(
-            @AuthenticationPrincipal User admin,
-            @PathVariable Long id) {
-        Apartment apartment = apartmentService.getById(id);
-        Apartment deactivated = apartmentService.deactivateApartment(apartment, admin);
-        return ResponseEntity.ok(ApartmentResponse.from(deactivated));
+    public ResponseEntity<Page<ApartmentResponse>> getAllApartments(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String city,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.APARTMENT_SORT_FIELDS);
+        Page<ApartmentResponse> apartments = apartmentService
+                .findAllWithFilters(status, city, PageRequest.of(page, size, sort))
+                .map(ApartmentResponse::from);
+        return ResponseEntity.ok(apartments);
     }
 
     @GetMapping("/reservations")
-    public ResponseEntity<List<ReservationResponse>> getAllReservations() {
-        return ResponseEntity.ok(reservationService.findAll()
-                .stream()
-                .map(ReservationResponse::from)
-                .toList());
+    public ResponseEntity<Page<ReservationResponse>> getAllReservations(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.RESERVATION_SORT_FIELDS);
+        Page<ReservationResponse> reservations = reservationService
+                .findAllWithFilters(status, PageRequest.of(page, size, sort))
+                .map(ReservationResponse::from);
+        return ResponseEntity.ok(reservations);
     }
 
     @GetMapping("/payments")
-    public ResponseEntity<List<PaymentResponse>> getAllPayments() {
-        return ResponseEntity.ok(paymentService.findAll()
-                .stream()
-                .map(PaymentResponse::from)
-                .toList());
+    public ResponseEntity<Page<PaymentResponse>> getAllPayments(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "paidAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.PAYMENT_SORT_FIELDS);
+        Page<PaymentResponse> payments = paymentService
+                .findAllWithFilters(status, PageRequest.of(page, size, sort))
+                .map(PaymentResponse::from);
+        return ResponseEntity.ok(payments);
     }
 }

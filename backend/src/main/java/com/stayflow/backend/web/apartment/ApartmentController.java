@@ -2,17 +2,23 @@ package com.stayflow.backend.web.apartment;
 
 import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentService;
+import com.stayflow.backend.domain.apartment.ApartmentType;
 import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.web.apartment.dto.ApartmentRequest;
 import com.stayflow.backend.web.apartment.dto.ApartmentResponse;
+import com.stayflow.backend.web.common.SortUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.math.BigDecimal;
+
 
 @RestController
 @RequestMapping("/api/apartments")
@@ -22,12 +28,23 @@ public class ApartmentController {
     private final ApartmentService apartmentService;
 
     @GetMapping
-    public ResponseEntity<List<ApartmentResponse>> getAll() {
-        List<ApartmentResponse> apartments = apartmentService
-                .getAllActive()
-                .stream()
-                .map(ApartmentResponse::from)
-                .toList();
+    public ResponseEntity<Page<ApartmentResponse>> getAll(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer minRooms,
+            @RequestParam(required = false) ApartmentType type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.APARTMENT_SORT_FIELDS);
+
+        Page<ApartmentResponse> apartments = apartmentService
+                .findWithFilters(city, minPrice, maxPrice, minRooms, type,
+                        PageRequest.of(page, size, sort))
+                .map(ApartmentResponse::from);
         return ResponseEntity.ok(apartments);
     }
 
@@ -96,13 +113,18 @@ public class ApartmentController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<List<ApartmentResponse>> getMyApartments(
-            @AuthenticationPrincipal User user) {
-        List<ApartmentResponse> apartments = apartmentService
-                .getLandlordApartments(user.getId())
-                .stream()
-                .map(ApartmentResponse::from)
-                .toList();
+    public ResponseEntity<Page<ApartmentResponse>> getMyApartments(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.APARTMENT_SORT_FIELDS);
+        Page<ApartmentResponse> apartments = apartmentService
+                .findByLandlordWithFilters(user.getId(), status, PageRequest.of(page, size, sort))
+                .map(ApartmentResponse::from);
         return ResponseEntity.ok(apartments);
     }
+
 }

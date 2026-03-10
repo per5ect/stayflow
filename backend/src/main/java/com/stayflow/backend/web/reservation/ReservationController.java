@@ -5,16 +5,19 @@ import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.reservation.ReservationService;
 import com.stayflow.backend.domain.user.User;
+import com.stayflow.backend.web.common.SortUtils;
 import com.stayflow.backend.web.reservation.dto.ReservationRequest;
 import com.stayflow.backend.web.reservation.dto.ReservationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -41,13 +44,17 @@ public class ReservationController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('RENTER')")
-    public ResponseEntity<List<ReservationResponse>> getMyReservations(
-            @AuthenticationPrincipal User user) {
-        List<ReservationResponse> reservations = reservationService
-                .getRenterReservations(user.getId())
-                .stream()
-                .map(ReservationResponse::from)
-                .toList();
+    public ResponseEntity<Page<ReservationResponse>> getMyReservations(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.RESERVATION_SORT_FIELDS);
+        Page<ReservationResponse> reservations = reservationService
+                .findByRenterWithFilters(user.getId(), status, PageRequest.of(page, size, sort))
+                .map(ReservationResponse::from);
         return ResponseEntity.ok(reservations);
     }
 
@@ -64,13 +71,17 @@ public class ReservationController {
 
     @GetMapping("/landlord")
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<List<ReservationResponse>> getLandlordReservations(
-            @AuthenticationPrincipal User user) {
-        List<ReservationResponse> reservations = reservationService
-                .getLandlordReservations(user.getId())
-                .stream()
-                .map(ReservationResponse::from)
-                .toList();
+    public ResponseEntity<Page<ReservationResponse>> getLandlordReservations(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort sort = SortUtils.buildSort(sortBy, sortDir, SortUtils.RESERVATION_SORT_FIELDS);
+        Page<ReservationResponse> reservations = reservationService
+                .findByLandlordWithFilters(user.getId(), status, PageRequest.of(page, size, sort))
+                .map(ReservationResponse::from);
         return ResponseEntity.ok(reservations);
     }
 

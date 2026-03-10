@@ -7,6 +7,8 @@ import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -152,5 +154,25 @@ public class ReservationService {
 
     public long countByStatus(String status) {
         return reservationRepository.countByStatus(ReservationStatus.valueOf(status));
+    }
+
+    public Page<Reservation> findByRenterWithFilters(Long renterId, String status, Pageable pageable) {
+        return reservationRepository.findByRenterIdWithFilters(
+                renterId,
+                status,
+                pageable);
+    }
+
+    public Page<Reservation> findByLandlordWithFilters(Long landlordId, String status, Pageable pageable) {
+        return reservationRepository.findByLandlordIdWithFilters(
+                landlordId,
+                status,
+                pageable);
+    }
+
+    public Page<Reservation> findAllWithFilters(String status, Pageable pageable) {
+        return reservationRepository.findAllWithFilters(
+                status,
+                pageable);
     }
 }

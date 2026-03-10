@@ -6,6 +6,8 @@ import com.stayflow.backend.domain.reservation.ReservationRepository;
 import com.stayflow.backend.domain.reservation.ReservationStatus;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -111,4 +113,11 @@ public class PaymentService {
     public BigDecimal getTotalCommission() {
         return paymentRepository.sumCommission();
     }
+
+    public Page<Payment> findAllWithFilters(String status, Pageable pageable) {
+        return paymentRepository.findAllWithFilters(
+                status,
+                pageable);
+    }
+
 }
