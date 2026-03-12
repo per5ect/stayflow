@@ -111,6 +111,47 @@ class ReservationControllerTest extends BaseIntegrationTest {
         assertThat(response.getBody().getStatus().name()).isEqualTo("APPROVED");
     }
 
+    @Test
+    void decline_shouldReturn200_whenLandlordDeclines() {
+        Long reservationId = createReservation();
+
+        var response = restClient.put()
+                .uri("/api/reservations/" + reservationId + "/decline?message=Sorry")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toEntity(ReservationResponse.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().getStatus().name()).isEqualTo("DECLINED");
+    }
+
+    @Test
+    void getLandlordReservations_shouldReturnPageForLandlord() {
+        createReservation();
+
+        var response = restClient.get()
+                .uri("/api/reservations/landlord")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<LinkedHashMap<String, Object>>() {});
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).containsKey("content");
+    }
+
+    @Test
+    void getLandlordReservations_shouldReturn403_forRenter() {
+        try {
+            restClient.get()
+                    .uri("/api/reservations/landlord")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("403");
+        }
+    }
+
     private Long createReservation() {
         ReservationRequest request = new ReservationRequest();
         request.setApartmentId(apartmentId);
