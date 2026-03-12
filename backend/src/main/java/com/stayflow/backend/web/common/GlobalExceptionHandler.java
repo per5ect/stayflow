@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<ErrorResponse> handleDisabled(DisabledException ex) {
+    public ResponseEntity<ErrorResponse> handleDisabled() {
         return buildResponse(HttpStatus.FORBIDDEN, "Email not verified");
     }
 
