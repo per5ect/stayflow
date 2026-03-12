@@ -109,7 +109,7 @@ class AdminControllerTest extends BaseIntegrationTest {
 
     @Test
     void deleteUser_shouldReturn200() {
-        String renterToken = registerAndLoginRenter("delete-me@test.com");
+        String renterToken = registerAndLoginRenter();
         Long userId = userRepository.findByEmail("delete-me@test.com").orElseThrow().getId();
 
         var response = restClient.delete()
@@ -133,27 +133,28 @@ class AdminControllerTest extends BaseIntegrationTest {
                 .toEntity(String.class);
 
         String body = response.getBody();
+        assert body != null;
         return body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
     }
 
-    private String registerAndLoginRenter(String email) {
+    private String registerAndLoginRenter() {
         var reg = new RegisterRequest();
         reg.setFirstName("Test");
         reg.setLastName("User");
-        reg.setEmail(email);
+        reg.setEmail("delete-me@test.com");
         reg.setPassword("password123");
         reg.setPhoneNumber("+1234567890");
         reg.setRole("RENTER");
         restClient.post().uri("/api/auth/register").body(reg).retrieve().toBodilessEntity();
 
-        var user = userRepository.findByEmail(email).orElseThrow();
+        var user = userRepository.findByEmail("delete-me@test.com").orElseThrow();
         var verify = new VerifyEmailRequest();
-        verify.setEmail(email);
+        verify.setEmail("delete-me@test.com");
         verify.setCode(user.getVerificationCode());
         restClient.post().uri("/api/auth/verify").body(verify).retrieve().toBodilessEntity();
 
         var login = new LoginRequest();
-        login.setEmail(email);
+        login.setEmail("delete-me@test.com");
         login.setPassword("password123");
         var response = restClient.post()
                 .uri("/api/auth/login")
@@ -162,6 +163,7 @@ class AdminControllerTest extends BaseIntegrationTest {
                 .toEntity(String.class);
 
         String body = response.getBody();
+        assert body != null;
         return body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
     }
 }
