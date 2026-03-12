@@ -1,11 +1,41 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${DB_TEST_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-
+    driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
-
+    locations: classpath:db/migration
   jpa:
     show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+cloudinary:
+  cloud-name: test
+  api-key: test
+  api-secret: test
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 3600000
+  commission:
+    rate: 0.10
