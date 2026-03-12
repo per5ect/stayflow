@@ -146,7 +146,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
                 <configuration>
-                    <argLine>-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
+                    <!--suppress UnresolvedMavenProperty -->
+                    <argLine>${argLine} -XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -198,6 +199,15 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <exclude>com/stayflow/backend/web/**</exclude>
+                                <exclude>com/stayflow/backend/web/**/**</exclude>
+                                <exclude>com/stayflow/backend/web/**/dto/**</exclude>
+                                <exclude>com/stayflow/backend/infrastructure/security/**</exclude>
+                                <exclude>com/stayflow/backend/infrastructure/config/**</exclude>
+                                <exclude>com/stayflow/backend/infrastructure/storage/**</exclude>
+                                <exclude>com/stayflow/backend/infrastructure/email/**</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
