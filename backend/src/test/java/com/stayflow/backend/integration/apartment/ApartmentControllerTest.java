@@ -2,6 +2,7 @@ package com.stayflow.backend.integration.apartment;
 
 import com.stayflow.backend.domain.apartment.ApartmentType;
 import com.stayflow.backend.infrastructure.email.EmailService;
+import com.stayflow.backend.infrastructure.storage.CloudinaryService;
 import com.stayflow.backend.integration.BaseIntegrationTest;
 import com.stayflow.backend.web.apartment.dto.ApartmentRequest;
 import com.stayflow.backend.web.apartment.dto.ApartmentResponse;
@@ -12,17 +13,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 class ApartmentControllerTest extends BaseIntegrationTest {
 
@@ -32,6 +40,9 @@ class ApartmentControllerTest extends BaseIntegrationTest {
     @MockitoBean
     EmailService emailService;
 
+    @MockitoBean
+    CloudinaryService cloudinaryService;
+
     RestClient restClient;
     String landlordToken;
 
@@ -39,6 +50,8 @@ class ApartmentControllerTest extends BaseIntegrationTest {
     void setUp() {
         restClient = RestClient.create("http://localhost:" + port);
         doNothing().when(emailService).sendVerificationCode(anyString(), anyString());
+        when(cloudinaryService.uploadImages(any(), anyString()))
+                .thenReturn(List.of("https://cdn.test/photo1.png", "https://cdn.test/photo2.png"));
 
         landlordToken = registerAndLoginLandlord("landlord@test.com");
     }
@@ -192,5 +205,110 @@ class ApartmentControllerTest extends BaseIntegrationTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).containsKey("content");
+    }
+
+    @Test
+    void update_shouldReturnUpdatedApartment() {
+        var created = restClient.post()
+                .uri("/api/apartments")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildRequest())
+                .retrieve()
+                .toEntity(ApartmentResponse.class)
+                .getBody();
+
+        var update = buildRequest();
+        update.setTitle("Updated title");
+        update.setPricePerNight(new BigDecimal("120.00"));
+
+        var response = restClient.put()
+                .uri("/api/apartments/" + created.getId())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(update)
+                .retrieve()
+                .toEntity(ApartmentResponse.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().getTitle()).isEqualTo("Updated title");
+        assertThat(response.getBody().getPricePerNight()).isEqualTo(new BigDecimal("120.00"));
+    }
+
+    @Test
+    void activate_shouldReturn200_whenLandlord() {
+        var created = restClient.post()
+                .uri("/api/apartments")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildRequest())
+                .retrieve()
+                .toEntity(ApartmentResponse.class)
+                .getBody();
+
+        restClient.put()
+                .uri("/api/apartments/" + created.getId() + "/deactivate")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toBodilessEntity();
+
+        var response = restClient.put()
+                .uri("/api/apartments/" + created.getId() + "/activate")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toEntity(ApartmentResponse.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody().getStatus().name()).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    void photos_shouldAddAndDelete() {
+        var created = restClient.post()
+                .uri("/api/apartments")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildRequest())
+                .retrieve()
+                .toEntity(ApartmentResponse.class)
+                .getBody();
+
+        ByteArrayResource file1 = new ByteArrayResource("img1".getBytes()) {
+            @Override
+            public String getFilename() {
+                return "photo1.png";
+            }
+        };
+        ByteArrayResource file2 = new ByteArrayResource("img2".getBytes()) {
+            @Override
+            public String getFilename() {
+                return "photo2.png";
+            }
+        };
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("files", file1);
+        body.add("files", file2);
+
+        var addResponse = restClient.post()
+                .uri("/api/apartments/" + created.getId() + "/photos")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(body)
+                .retrieve()
+                .toEntity(ApartmentResponse.class);
+
+        assertThat(addResponse.getStatusCode().value()).isEqualTo(200);
+        assertThat(addResponse.getBody().getPhotoUrls()).isNotEmpty();
+
+        var deleteResponse = restClient.delete()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/apartments/" + created.getId() + "/photos")
+                        .queryParam("photoUrl", "https://cdn.test/photo1.png")
+                        .build())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toEntity(ApartmentResponse.class);
+
+        assertThat(deleteResponse.getStatusCode().value()).isEqualTo(200);
     }
 }

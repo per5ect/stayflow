@@ -94,7 +94,6 @@ class AuthControllerTest extends BaseIntegrationTest {
 
     @Test
     void login_shouldReturnToken_whenVerified() {
-        // register
         var reg = new RegisterRequest();
         reg.setFirstName("Bob");
         reg.setLastName("Smith");
@@ -104,14 +103,12 @@ class AuthControllerTest extends BaseIntegrationTest {
         reg.setRole("RENTER");
         restClient.post().uri("/api/auth/register").body(reg).retrieve().toBodilessEntity();
 
-        // verify
         var user = userRepository.findByEmail("bob@test.com").orElseThrow();
         var verify = new VerifyEmailRequest();
         verify.setEmail("bob@test.com");
         verify.setCode(user.getVerificationCode());
         restClient.post().uri("/api/auth/verify").body(verify).retrieve().toBodilessEntity();
 
-        // login
         var login = new LoginRequest();
         login.setEmail("bob@test.com");
         login.setPassword("password123");
