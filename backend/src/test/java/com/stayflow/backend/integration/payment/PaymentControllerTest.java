@@ -37,6 +37,7 @@ class PaymentControllerTest extends BaseIntegrationTest {
     RestClient restClient;
     String landlordToken;
     String renterToken;
+    String otherRenterToken;
     Long apartmentId;
     Long reservationId;
 
@@ -47,8 +48,9 @@ class PaymentControllerTest extends BaseIntegrationTest {
 
         landlordToken = registerAndLogin("landlord-pay@test.com", "LANDLORD");
         renterToken = registerAndLogin("renter-pay@test.com", "RENTER");
+        otherRenterToken = registerAndLogin("other-renter@test.com", "RENTER");
         apartmentId = createApartment(landlordToken);
-        reservationId = createReservation();
+        reservationId = createReservation(5);
         approveReservation();
     }
 
@@ -100,6 +102,48 @@ class PaymentControllerTest extends BaseIntegrationTest {
         assertThat(response.getBody()).isNotEmpty();
     }
 
+    @Test
+    void pay_shouldReturn403_whenPayingOthersReservation() {
+        PaymentRequest request = new PaymentRequest();
+        request.setReservationId(reservationId);
+        request.setCardBrand("VISA");
+        request.setCardLastFour("4242");
+
+        try {
+            restClient.post()
+                    .uri("/api/payments")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherRenterToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("403");
+        }
+    }
+
+    @Test
+    void pay_shouldReturn400_whenReservationNotApproved() {
+        Long pendingReservationId = createReservation(10);
+
+        PaymentRequest request = new PaymentRequest();
+        request.setReservationId(pendingReservationId);
+        request.setCardBrand("VISA");
+        request.setCardLastFour("4242");
+
+        try {
+            restClient.post()
+                    .uri("/api/payments")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("400");
+        }
+    }
+
     private void payReservation() {
         PaymentRequest request = new PaymentRequest();
         request.setReservationId(reservationId);
@@ -115,11 +159,11 @@ class PaymentControllerTest extends BaseIntegrationTest {
                 .toBodilessEntity();
     }
 
-    private Long createReservation() {
+    private Long createReservation(int startOffsetDays) {
         ReservationRequest request = new ReservationRequest();
         request.setApartmentId(apartmentId);
-        request.setCheckIn(LocalDate.now().plusDays(5));
-        request.setCheckOut(LocalDate.now().plusDays(8));
+        request.setCheckIn(LocalDate.now().plusDays(startOffsetDays));
+        request.setCheckOut(LocalDate.now().plusDays(startOffsetDays + 3));
 
         return restClient.post()
                 .uri("/api/reservations")
