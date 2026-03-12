@@ -132,6 +132,37 @@ class UserControllerTest extends BaseIntegrationTest {
         assertThat(response.getBody().getPhotoUrl()).isEqualTo("https://cdn.test/avatar.png");
     }
 
+    @Test
+    void getProfile_shouldReturn403_whenNotAuthenticated() {
+        try {
+            restClient.get()
+                    .uri("/api/users/me")
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("403");
+        }
+    }
+
+    @Test
+    void updateProfile_shouldReturn400_whenInvalidBody() {
+        UpdateProfileRequest request = new UpdateProfileRequest();
+        request.setFirstName("");
+        request.setLastName("");
+
+        try {
+            restClient.put()
+                    .uri("/api/users/me")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            assertThat(e.getMessage()).contains("400");
+        }
+    }
+
     private String registerAndLogin(String email, String role) {
         var reg = new RegisterRequest();
         reg.setFirstName("Test");
