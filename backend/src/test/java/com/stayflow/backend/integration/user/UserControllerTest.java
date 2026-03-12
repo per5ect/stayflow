@@ -49,7 +49,7 @@ class UserControllerTest extends BaseIntegrationTest {
         doNothing().when(emailService).sendVerificationCode(anyString(), anyString());
         when(cloudinaryService.uploadImage(any(), anyString()))
                 .thenReturn("https://cdn.test/avatar.png");
-        renterToken = registerAndLogin("user@test.com", "RENTER");
+        renterToken = registerAndLogin();
     }
 
     @Test
@@ -61,6 +61,7 @@ class UserControllerTest extends BaseIntegrationTest {
                 .toEntity(UserProfileResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getEmail()).isEqualTo("user@test.com");
     }
 
@@ -80,6 +81,7 @@ class UserControllerTest extends BaseIntegrationTest {
                 .toEntity(UserProfileResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getFirstName()).isEqualTo("New");
         assertThat(response.getBody().getLastName()).isEqualTo("Name");
     }
@@ -129,6 +131,7 @@ class UserControllerTest extends BaseIntegrationTest {
                 .toEntity(UserProfileResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getPhotoUrl()).isEqualTo("https://cdn.test/avatar.png");
     }
 
@@ -163,24 +166,24 @@ class UserControllerTest extends BaseIntegrationTest {
         }
     }
 
-    private String registerAndLogin(String email, String role) {
+    private String registerAndLogin() {
         var reg = new RegisterRequest();
         reg.setFirstName("Test");
         reg.setLastName("User");
-        reg.setEmail(email);
+        reg.setEmail("user@test.com");
         reg.setPassword("password123");
         reg.setPhoneNumber("+1234567890");
-        reg.setRole(role);
+        reg.setRole("RENTER");
         restClient.post().uri("/api/auth/register").body(reg).retrieve().toBodilessEntity();
 
-        var user = userRepository.findByEmail(email).orElseThrow();
+        var user = userRepository.findByEmail("user@test.com").orElseThrow();
         var verify = new VerifyEmailRequest();
-        verify.setEmail(email);
+        verify.setEmail("user@test.com");
         verify.setCode(user.getVerificationCode());
         restClient.post().uri("/api/auth/verify").body(verify).retrieve().toBodilessEntity();
 
         var login = new LoginRequest();
-        login.setEmail(email);
+        login.setEmail("user@test.com");
         login.setPassword("password123");
         var response = restClient.post()
                 .uri("/api/auth/login")
@@ -189,6 +192,7 @@ class UserControllerTest extends BaseIntegrationTest {
                 .toEntity(String.class);
 
         String body = response.getBody();
+        assert body != null;
         return body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
     }
 }

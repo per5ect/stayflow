@@ -21,6 +21,7 @@ import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,6 +71,7 @@ class PaymentControllerTest extends BaseIntegrationTest {
                 .toEntity(PaymentResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getReservationId()).isEqualTo(reservationId);
         assertThat(response.getBody().getStatus().name()).isEqualTo("COMPLETED");
     }
@@ -165,14 +167,14 @@ class PaymentControllerTest extends BaseIntegrationTest {
         request.setCheckIn(LocalDate.now().plusDays(startOffsetDays));
         request.setCheckOut(LocalDate.now().plusDays(startOffsetDays + 3));
 
-        return restClient.post()
-                .uri("/api/reservations")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .toEntity(ReservationResponse.class)
-                .getBody()
+        return Objects.requireNonNull(restClient.post()
+                        .uri("/api/reservations")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(ReservationResponse.class)
+                        .getBody())
                 .getId();
     }
 
@@ -195,14 +197,14 @@ class PaymentControllerTest extends BaseIntegrationTest {
         request.setRoomsCount(2);
         request.setApartmentType(com.stayflow.backend.domain.apartment.ApartmentType.APARTMENT);
 
-        return restClient.post()
-                .uri("/api/apartments")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .toEntity(ApartmentResponse.class)
-                .getBody()
+        return Objects.requireNonNull(restClient.post()
+                        .uri("/api/apartments")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(ApartmentResponse.class)
+                        .getBody())
                 .getId();
     }
 
@@ -232,6 +234,7 @@ class PaymentControllerTest extends BaseIntegrationTest {
                 .toEntity(String.class);
 
         String body = response.getBody();
+        assert body != null;
         return body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
     }
 }

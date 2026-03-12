@@ -21,6 +21,7 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -65,6 +66,7 @@ class ReservationControllerTest extends BaseIntegrationTest {
                 .toEntity(ReservationResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getApartmentId()).isEqualTo(apartmentId);
         assertThat(response.getBody().getStatus().name()).isEqualTo("PENDING");
     }
@@ -108,6 +110,7 @@ class ReservationControllerTest extends BaseIntegrationTest {
                 .toEntity(ReservationResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getStatus().name()).isEqualTo("APPROVED");
     }
 
@@ -122,6 +125,7 @@ class ReservationControllerTest extends BaseIntegrationTest {
                 .toEntity(ReservationResponse.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
         assertThat(response.getBody().getStatus().name()).isEqualTo("DECLINED");
     }
 
@@ -158,14 +162,14 @@ class ReservationControllerTest extends BaseIntegrationTest {
         request.setCheckIn(LocalDate.now().plusDays(5));
         request.setCheckOut(LocalDate.now().plusDays(8));
 
-        return restClient.post()
-                .uri("/api/reservations")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .toEntity(ReservationResponse.class)
-                .getBody()
+        return Objects.requireNonNull(restClient.post()
+                        .uri("/api/reservations")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(ReservationResponse.class)
+                        .getBody())
                 .getId();
     }
 
@@ -180,14 +184,14 @@ class ReservationControllerTest extends BaseIntegrationTest {
         request.setRoomsCount(2);
         request.setApartmentType(com.stayflow.backend.domain.apartment.ApartmentType.APARTMENT);
 
-        return restClient.post()
-                .uri("/api/apartments")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .toEntity(ApartmentResponse.class)
-                .getBody()
+        return Objects.requireNonNull(restClient.post()
+                        .uri("/api/apartments")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .toEntity(ApartmentResponse.class)
+                        .getBody())
                 .getId();
     }
 
@@ -217,6 +221,7 @@ class ReservationControllerTest extends BaseIntegrationTest {
                 .toEntity(String.class);
 
         String body = response.getBody();
+        assert body != null;
         return body.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
     }
 }
