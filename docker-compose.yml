@@ -1,4 +1,28 @@
 services:
+  backend:
+    build:
+      context: ./backend
+    container_name: stayflow-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_USER}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_TEST_URL: jdbc:postgresql://postgres-test:5432/stayflow_test
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_USERNAME: ${MAIL_USERNAME:-test}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-test}
+      CLOUD_NAME: ${CLOUD_NAME:-test}
+      CLOUD_API_KEY: ${CLOUD_API_KEY:-test}
+      CLOUD_API_SECRET: ${CLOUD_API_SECRET:-test}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - postgres-test
+
   postgres:
     image: postgres:15
     container_name: stayflow-postgres
