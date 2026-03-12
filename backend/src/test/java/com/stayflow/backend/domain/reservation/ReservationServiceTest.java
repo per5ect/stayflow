@@ -294,4 +294,26 @@ class ReservationServiceTest {
         assertThrows(UnauthorizedException.class, () ->
                 reservationService.cancelReservation(reservation, otherUser));
     }
+
+    @Test
+    void shouldThrowException_whenLandlordApprovesOtherLandlordsReservation() {
+        User otherLandlord = User.builder().id(99L).email("other@landlord.com").build();
+
+        assertThrows(UnauthorizedException.class, () ->
+                reservationService.approveReservation(reservation, otherLandlord, "Nope"));
+    }
+
+    @Test
+    void shouldThrowException_whenCancellingAlreadyCancelled() {
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.cancelReservation(reservation, renter));
+    }
+
+    @Test
+    void shouldThrowException_whenDatesAreNull() {
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.createReservation(renter, apartment, null, null));
+    }
 }

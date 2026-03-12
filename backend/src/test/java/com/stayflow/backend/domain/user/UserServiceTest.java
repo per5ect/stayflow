@@ -3,6 +3,7 @@ package com.stayflow.backend.domain.user;
 import com.stayflow.backend.common.exception.user.InvalidPasswordException;
 import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
+import com.stayflow.backend.common.exception.user.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private com.stayflow.backend.infrastructure.storage.CloudinaryService cloudinaryService;
 
     @InjectMocks
     private UserService userService;
@@ -172,5 +176,25 @@ class UserServiceTest {
         long result = userService.countByRole("RENTER");
 
         assertEquals(3L, result);
+    }
+
+    @Test
+    void shouldDeleteOldAvatar_whenUpdatingAvatar() {
+        existingUser.setPhotoUrl("old.png");
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        userService.updateAvatar(existingUser, "new.png");
+
+        verify(cloudinaryService).deleteImage("old.png");
+    }
+
+    @Test
+    void shouldDeleteUserById() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmail(existingUser.getEmail())).thenReturn(Optional.of(existingUser));
+
+        userService.deleteUser(1L);
+
+        verify(userRepository).delete(existingUser);
     }
 }

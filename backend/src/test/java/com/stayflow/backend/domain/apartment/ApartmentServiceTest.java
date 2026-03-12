@@ -4,6 +4,7 @@ import com.stayflow.backend.common.exception.apartment.ApartmentAvailabilityNotF
 import com.stayflow.backend.common.exception.apartment.ApartmentNotFoundException;
 import com.stayflow.backend.common.exception.apartment.InvalidApartmentDataException;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
 import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.domain.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,10 @@ class ApartmentServiceTest {
 
     @Mock
     private ApartmentRepository apartmentRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
+
 
     @Mock
     private ApartmentAvailableDatesRepository apartmentAvailableDatesRepository;
@@ -298,5 +303,50 @@ class ApartmentServiceTest {
 
         assertThrows(ApartmentAvailabilityNotFoundException.class, () ->
                 apartmentService.removeAvailability(99L, landlord));
+    }
+
+    @Test
+    void shouldFilterApartmentsByAvailabilityAndConflicts() {
+        Apartment a1 = Apartment.builder().id(1L).status(ApartmentStatus.ACTIVE).build();
+        Apartment a2 = Apartment.builder().id(2L).status(ApartmentStatus.ACTIVE).build();
+        when(apartmentRepository.findWithFilters(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(a1, a2)));
+        when(apartmentAvailableDatesRepository.existsAvailability(eq(1L), any(), any()))
+                .thenReturn(true);
+        when(apartmentAvailableDatesRepository.existsAvailability(eq(2L), any(), any()))
+                .thenReturn(true);
+        when(reservationRepository.existsOverlapping(eq(1L), any(), any()))
+                .thenReturn(false);
+        when(reservationRepository.existsOverlapping(eq(2L), any(), any()))
+                .thenReturn(true);
+
+        var page = apartmentService.findWithFilters(
+                null, null, null, null, null,
+                LocalDate.now().plusDays(5), LocalDate.now().plusDays(8),
+                org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertEquals(1, page.getContent().size());
+        assertEquals(1L, page.getContent().get(0).getId());
+    }
+
+    @Test
+    void shouldAddPhotosToExistingOnes() {
+        apartment.setPhotoUrls(new String[] { "old1.png" });
+        when(apartmentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Apartment result = apartmentService.addPhotos(apartment, landlord, List.of("new1.png", "new2.png"));
+
+        assertEquals(3, result.getPhotoUrls().length);
+    }
+
+    @Test
+    void shouldDeletePhotoFromApartment() {
+        apartment.setPhotoUrls(new String[] { "one.png", "two.png" });
+        when(apartmentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Apartment result = apartmentService.deletePhoto(apartment, landlord, "one.png");
+
+        assertEquals(1, result.getPhotoUrls().length);
+        assertEquals("two.png", result.getPhotoUrls()[0]);
     }
 }
