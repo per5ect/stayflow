@@ -12,13 +12,13 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: stayflow_test
+          POSTGRES_USER: stayflow
+          POSTGRES_PASSWORD: stayflow
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.DB_USER }} -d ${{ secrets.POSTGRES_DB }}"
+          --health-cmd="pg_isready -U stayflow -d stayflow_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
