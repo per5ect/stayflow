@@ -4,6 +4,12 @@ import com.stayflow.backend.common.exception.user.InvalidPasswordException;
 import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
 import com.stayflow.backend.common.exception.user.UserNotFoundException;
+import com.stayflow.backend.domain.apartment.ApartmentRepository;
+import com.stayflow.backend.domain.apartment.ApartmentStatus;
+import com.stayflow.backend.domain.payment.PaymentRepository;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
+import com.stayflow.backend.domain.reservation.ReservationStatus;
+import com.stayflow.backend.web.user.dto.UserStatsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +38,15 @@ class UserServiceTest {
 
     @Mock
     private com.stayflow.backend.infrastructure.storage.CloudinaryService cloudinaryService;
+
+    @Mock
+    private ApartmentRepository apartmentRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
+
+    @Mock
+    private PaymentRepository paymentRepository;
 
     @InjectMocks
     private UserService userService;
@@ -196,5 +212,68 @@ class UserServiceTest {
         userService.deleteUser(1L);
 
         verify(userRepository).delete(existingUser);
+    }
+
+    @Test
+    void shouldReturnLandlordStats() {
+        Long landlordId = 10L;
+
+        when(apartmentRepository.countByLandlordId(landlordId)).thenReturn(3L);
+        when(apartmentRepository.countByLandlordIdAndStatus(landlordId, ApartmentStatus.ACTIVE))
+                .thenReturn(2L);
+
+        when(reservationRepository.countByApartmentLandlordId(landlordId)).thenReturn(5L);
+        when(reservationRepository.countByApartmentLandlordIdAndStatus(landlordId, ReservationStatus.PENDING))
+                .thenReturn(2L);
+        when(reservationRepository.countByApartmentLandlordIdAndStatus(landlordId, ReservationStatus.APPROVED))
+                .thenReturn(1L);
+        when(reservationRepository.countByApartmentLandlordIdAndStatus(landlordId, ReservationStatus.DECLINED))
+                .thenReturn(1L);
+        when(reservationRepository.countByApartmentLandlordIdAndStatus(landlordId, ReservationStatus.PAID))
+                .thenReturn(1L);
+
+        when(paymentRepository.sumLandlordPayoutByLandlordId(landlordId))
+                .thenReturn(new BigDecimal("900.0"));
+
+        UserStatsResponse stats = userService.getLandlordStats(landlordId);
+
+        assertEquals(3L, stats.getTotalApartments());
+        assertEquals(2L, stats.getActiveApartments());
+        assertEquals(5L, stats.getTotalReservations());
+        assertEquals(2L, stats.getPendingReservations());
+        assertEquals(1L, stats.getApprovedReservations());
+        assertEquals(1L, stats.getDeclinedReservations());
+        assertEquals(1L, stats.getPaidReservations());
+        assertEquals(new BigDecimal("900.0"), stats.getTotalEarnings());
+    }
+
+    @Test
+    void shouldReturnRenterStats() {
+        Long renterId = 11L;
+
+        when(reservationRepository.countByRenterId(renterId)).thenReturn(4L);
+        when(reservationRepository.countByRenterIdAndStatus(renterId, ReservationStatus.PENDING))
+                .thenReturn(1L);
+        when(reservationRepository.countByRenterIdAndStatus(renterId, ReservationStatus.APPROVED))
+                .thenReturn(1L);
+        when(reservationRepository.countByRenterIdAndStatus(renterId, ReservationStatus.DECLINED))
+                .thenReturn(1L);
+        when(reservationRepository.countByRenterIdAndStatus(renterId, ReservationStatus.CANCELLED))
+                .thenReturn(1L);
+        when(reservationRepository.countByRenterIdAndStatus(renterId, ReservationStatus.PAID))
+                .thenReturn(0L);
+
+        when(paymentRepository.sumAmountByRenterId(renterId))
+                .thenReturn(new BigDecimal("500.0"));
+
+        UserStatsResponse stats = userService.getRenterStats(renterId);
+
+        assertEquals(4L, stats.getTotalReservations());
+        assertEquals(1L, stats.getPendingReservations());
+        assertEquals(1L, stats.getApprovedReservations());
+        assertEquals(1L, stats.getDeclinedReservations());
+        assertEquals(1L, stats.getCancelledReservations());
+        assertEquals(0L, stats.getPaidReservations());
+        assertEquals(new BigDecimal("500.0"), stats.getTotalSpent());
     }
 }
