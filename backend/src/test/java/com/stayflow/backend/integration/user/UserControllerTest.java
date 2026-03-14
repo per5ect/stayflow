@@ -9,6 +9,7 @@ import com.stayflow.backend.web.auth.dto.VerifyEmailRequest;
 import com.stayflow.backend.web.user.dto.ChangePasswordRequest;
 import com.stayflow.backend.web.user.dto.UpdateProfileRequest;
 import com.stayflow.backend.web.user.dto.UserProfileResponse;
+import com.stayflow.backend.web.user.dto.UserStatsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -22,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -42,6 +44,7 @@ class UserControllerTest extends BaseIntegrationTest {
 
     RestClient restClient;
     String renterToken;
+    String landlordToken;
 
     @BeforeEach
     void setUp() {
@@ -49,7 +52,8 @@ class UserControllerTest extends BaseIntegrationTest {
         doNothing().when(emailService).sendVerificationCode(anyString(), anyString());
         when(cloudinaryService.uploadImage(any(), anyString()))
                 .thenReturn("https://cdn.test/avatar.png");
-        renterToken = registerAndLogin();
+        renterToken = registerAndLogin("RENTER", "user@test.com");
+        landlordToken = registerAndLogin("LANDLORD", "landlord@test.com");
     }
 
     @Test
@@ -63,6 +67,36 @@ class UserControllerTest extends BaseIntegrationTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assert response.getBody() != null;
         assertThat(response.getBody().getEmail()).isEqualTo("user@test.com");
+    }
+
+    @Test
+    void getStats_shouldReturnRenterStats() {
+        var response = restClient.get()
+                .uri("/api/users/me/stats")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
+                .retrieve()
+                .toEntity(UserStatsResponse.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
+        assertThat(response.getBody().getRole().name()).isEqualTo("RENTER");
+        assertThat(response.getBody().getTotalReservations()).isEqualTo(0L);
+        assertThat(response.getBody().getTotalSpent()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void getStats_shouldReturnLandlordStats() {
+        var response = restClient.get()
+                .uri("/api/users/me/stats")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + landlordToken)
+                .retrieve()
+                .toEntity(UserStatsResponse.class);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assert response.getBody() != null;
+        assertThat(response.getBody().getRole().name()).isEqualTo("LANDLORD");
+        assertThat(response.getBody().getTotalApartments()).isEqualTo(0L);
+        assertThat(response.getBody().getTotalEarnings()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
@@ -166,24 +200,24 @@ class UserControllerTest extends BaseIntegrationTest {
         }
     }
 
-    private String registerAndLogin() {
+    private String registerAndLogin(String role, String email) {
         var reg = new RegisterRequest();
         reg.setFirstName("Test");
         reg.setLastName("User");
-        reg.setEmail("user@test.com");
+        reg.setEmail(email);
         reg.setPassword("password123");
         reg.setPhoneNumber("+1234567890");
-        reg.setRole("RENTER");
+        reg.setRole(role);
         restClient.post().uri("/api/auth/register").body(reg).retrieve().toBodilessEntity();
 
-        var user = userRepository.findByEmail("user@test.com").orElseThrow();
+        var user = userRepository.findByEmail(email).orElseThrow();
         var verify = new VerifyEmailRequest();
-        verify.setEmail("user@test.com");
+        verify.setEmail(email);
         verify.setCode(user.getVerificationCode());
         restClient.post().uri("/api/auth/verify").body(verify).retrieve().toBodilessEntity();
 
         var login = new LoginRequest();
-        login.setEmail("user@test.com");
+        login.setEmail(email);
         login.setPassword("password123");
         var response = restClient.post()
                 .uri("/api/auth/login")

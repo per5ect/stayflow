@@ -1,11 +1,14 @@
 package com.stayflow.backend.web.user;
 
+import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.domain.user.User;
+import com.stayflow.backend.domain.user.UserRole;
 import com.stayflow.backend.domain.user.UserService;
 import com.stayflow.backend.infrastructure.storage.CloudinaryService;
 import com.stayflow.backend.web.user.dto.ChangePasswordRequest;
 import com.stayflow.backend.web.user.dto.UpdateProfileRequest;
 import com.stayflow.backend.web.user.dto.UserProfileResponse;
+import com.stayflow.backend.web.user.dto.UserStatsResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +42,20 @@ public class UserController {
                 request.getPhotoUrl()
         );
         return ResponseEntity.ok(UserProfileResponse.from(updated));
+    }
+
+    @GetMapping("/me/stats")
+    public ResponseEntity<UserStatsResponse> getMyStats(
+            @AuthenticationPrincipal User user) {
+        UserStatsResponse stats;
+        if (user.getRole() == UserRole.LANDLORD) {
+            stats = userService.getLandlordStats(user.getId());
+        } else if (user.getRole() == UserRole.RENTER) {
+            stats = userService.getRenterStats(user.getId());
+        } else {
+            throw new UnauthorizedException("Admins should use /api/admin/stats");
+        }
+        return ResponseEntity.ok(stats);
     }
 
     @PutMapping("/me/password")
