@@ -4,7 +4,13 @@ import com.stayflow.backend.common.exception.user.InvalidPasswordException;
 import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
 import com.stayflow.backend.common.exception.user.UserNotFoundException;
+import com.stayflow.backend.domain.apartment.ApartmentRepository;
+import com.stayflow.backend.domain.apartment.ApartmentStatus;
+import com.stayflow.backend.domain.payment.PaymentRepository;
+import com.stayflow.backend.domain.reservation.ReservationRepository;
+import com.stayflow.backend.domain.reservation.ReservationStatus;
 import com.stayflow.backend.infrastructure.storage.CloudinaryService;
+import com.stayflow.backend.web.user.dto.UserStatsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +28,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
+    private final ApartmentRepository apartmentRepository;
+    private final ReservationRepository reservationRepository;
+    private final PaymentRepository paymentRepository;
 
 
     public User register(String firstName, String lastName,
@@ -131,5 +140,58 @@ public class UserService {
         user.setPhotoUrl(photoUrl);
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
+    }
+
+    public UserStatsResponse getLandlordStats(Long landlordId) {
+        long totalApartments = apartmentRepository.countByLandlordId(landlordId);
+        long activeApartments = apartmentRepository.countByLandlordIdAndStatus(
+                landlordId, ApartmentStatus.ACTIVE);
+
+        long totalReservations = reservationRepository.countByApartmentLandlordId(landlordId);
+        long pending = reservationRepository.countByApartmentLandlordIdAndStatus(
+                landlordId, ReservationStatus.PENDING);
+        long approved = reservationRepository.countByApartmentLandlordIdAndStatus(
+                landlordId, ReservationStatus.APPROVED);
+        long declined = reservationRepository.countByApartmentLandlordIdAndStatus(
+                landlordId, ReservationStatus.DECLINED);
+        long paid = reservationRepository.countByApartmentLandlordIdAndStatus(
+                landlordId, ReservationStatus.PAID);
+
+        return UserStatsResponse.builder()
+                .role(UserRole.LANDLORD)
+                .totalApartments(totalApartments)
+                .activeApartments(activeApartments)
+                .totalReservations(totalReservations)
+                .pendingReservations(pending)
+                .approvedReservations(approved)
+                .declinedReservations(declined)
+                .paidReservations(paid)
+                .totalEarnings(paymentRepository.sumLandlordPayoutByLandlordId(landlordId))
+                .build();
+    }
+
+    public UserStatsResponse getRenterStats(Long renterId) {
+        long totalReservations = reservationRepository.countByRenterId(renterId);
+        long pending = reservationRepository.countByRenterIdAndStatus(
+                renterId, ReservationStatus.PENDING);
+        long approved = reservationRepository.countByRenterIdAndStatus(
+                renterId, ReservationStatus.APPROVED);
+        long declined = reservationRepository.countByRenterIdAndStatus(
+                renterId, ReservationStatus.DECLINED);
+        long cancelled = reservationRepository.countByRenterIdAndStatus(
+                renterId, ReservationStatus.CANCELLED);
+        long paid = reservationRepository.countByRenterIdAndStatus(
+                renterId, ReservationStatus.PAID);
+
+        return UserStatsResponse.builder()
+                .role(UserRole.RENTER)
+                .totalReservations(totalReservations)
+                .pendingReservations(pending)
+                .approvedReservations(approved)
+                .declinedReservations(declined)
+                .cancelledReservations(cancelled)
+                .paidReservations(paid)
+                .totalSpent(paymentRepository.sumAmountByRenterId(renterId))
+                .build();
     }
 }

@@ -22,6 +22,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COALESCE(SUM(p.commission), 0) FROM Payment p WHERE p.status = 'COMPLETED'")
     BigDecimal sumCommission();
 
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p " +
+            "WHERE p.renter.id = :renterId AND p.status = 'COMPLETED'")
+    BigDecimal sumAmountByRenterId(@Param("renterId") Long renterId);
+
+    @Query("SELECT COALESCE(SUM(p.landlordPayout), 0) FROM Payment p " +
+            "WHERE p.landlord.id = :landlordId AND p.status = 'COMPLETED'")
+    BigDecimal sumLandlordPayoutByLandlordId(@Param("landlordId") Long landlordId);
+
     @Query("SELECT p FROM Payment p WHERE " +
             "(:status IS NULL OR CAST(p.status AS string) = :status)")
     Page<Payment> findAllWithFilters(@Param("status") String status,

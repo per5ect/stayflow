@@ -36,6 +36,10 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
                                                 @Param("status") String status,
                                                 Pageable pageable);
 
+    long countByLandlordId(Long landlordId);
+
+    long countByLandlordIdAndStatus(Long landlordId, ApartmentStatus status);
+
     @Query("SELECT a FROM Apartment a WHERE " +
             "(:status IS NULL OR CAST(a.status AS string) = :status) " +
             "AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', CAST(:city AS string), '%')))")

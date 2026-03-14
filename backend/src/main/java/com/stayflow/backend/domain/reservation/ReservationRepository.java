@@ -26,6 +26,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByRenterId(Long renterId);
     List<Reservation> findByApartmentLandlordId(Long landlordId);
     long countByStatus(ReservationStatus status);
+    long countByRenterId(Long renterId);
+    long countByApartmentLandlordId(Long landlordId);
+    long countByRenterIdAndStatus(Long renterId, ReservationStatus status);
+    long countByApartmentLandlordIdAndStatus(Long landlordId, ReservationStatus status);
 
     @Query("SELECT r FROM Reservation r WHERE r.renter.id = :renterId " +
             "AND (:status IS NULL OR CAST(r.status AS string) = :status)")
