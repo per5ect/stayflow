@@ -9,7 +9,7 @@ export function useHomeController() {
 
   const { data: featured, isLoading } = useQuery({
     queryKey: ['apartments', 'featured'],
-    queryFn: () => apartmentAdapter.getAll({ size: 6, sortBy: 'createdAt', sortDir: 'desc' }),
+    queryFn: () => apartmentAdapter.getAll({ size: 10, sortBy: 'createdAt', sortDir: 'desc' }),
   });
 
   function handleSearch() {
