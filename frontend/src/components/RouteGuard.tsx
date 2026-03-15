@@ -13,6 +13,8 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
 
 const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/verify'];
 
+const PUBLIC_ROUTES = ['/renter/search'];
+
 function getRequiredRoles(pathname: string): UserRole[] | null {
   for (const prefix of Object.keys(ROLE_ROUTES)) {
     if (pathname === prefix || pathname.startsWith(prefix + '/')) {
@@ -53,7 +55,7 @@ export function RouteGuard({ children }: Props) {
     }
 
     // Protected route: not authenticated → login
-    if (requiredRoles && !isAuthenticated) {
+    if (requiredRoles && !isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
       router.replace(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }

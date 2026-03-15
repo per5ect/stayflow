@@ -1,1 +1,1 @@
-export { default } from '../../src/screens/renter/Search/Search';
+export { default } from '../../src/screens/guest/Search/Search';
