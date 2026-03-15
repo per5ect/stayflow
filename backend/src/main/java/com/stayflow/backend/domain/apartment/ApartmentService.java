@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ public class ApartmentService {
         return apartmentRepository.save(apartment);
     }
 
+    @Transactional(readOnly = true)
     public Apartment getById(Long id) {
         return apartmentRepository.findById(id)
                 .orElseThrow(() -> new ApartmentNotFoundException("Apartment not found"));
@@ -115,6 +117,7 @@ public class ApartmentService {
         return apartmentRepository.countByStatus(ApartmentStatus.ACTIVE);
     }
 
+    @Transactional(readOnly = true)
     public Page<Apartment> findWithFilters(String city, BigDecimal minPrice,
                                             BigDecimal maxPrice, Integer minRooms,
                                             ApartmentType type, LocalDate checkIn,

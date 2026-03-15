@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -29,6 +30,7 @@ public class ApartmentResponse {
     private ApartmentStatus status;
     private String landlordName;
     private LocalDateTime createdAt;
+    private List<AvailabilityResponse> availableDates;
 
     public static ApartmentResponse from(Apartment apartment) {
         return ApartmentResponse.builder()
@@ -46,6 +48,9 @@ public class ApartmentResponse {
                 .landlordName(apartment.getLandlord().getFirstName()
                         + " " + apartment.getLandlord().getLastName())
                 .createdAt(apartment.getCreatedAt())
+                .availableDates(apartment.getAvailableDates().stream()
+                        .map(AvailabilityResponse::from)
+                        .toList())
                 .build();
     }
 }
