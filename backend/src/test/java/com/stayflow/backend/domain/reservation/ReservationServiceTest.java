@@ -4,6 +4,7 @@ import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.domain.apartment.Apartment;
+import com.stayflow.backend.domain.apartment.ApartmentAvailableDatesRepository;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
 import com.stayflow.backend.domain.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,9 @@ class ReservationServiceTest {
 
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private ApartmentAvailableDatesRepository availableDatesRepository;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -114,6 +118,8 @@ class ReservationServiceTest {
     void shouldThrowException_whenDatesOverlap() {
         LocalDate checkIn = LocalDate.of(2025, 7, 1);
         LocalDate checkOut = LocalDate.of(2025, 7, 10);
+        when(availableDatesRepository.existsAvailability(
+                apartment.getId(), checkIn, checkOut)).thenReturn(true);
         when(reservationRepository.existsOverlapping(
                 apartment.getId(), checkIn, checkOut)).thenReturn(true);
 
@@ -125,6 +131,8 @@ class ReservationServiceTest {
     void shouldCreateReservation_whenAllConditionsAreMet() {
         LocalDate checkIn = LocalDate.of(2025, 7, 1);
         LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        when(availableDatesRepository.existsAvailability(any(), any(), any()))
+                .thenReturn(true);
         when(reservationRepository.existsOverlapping(any(), any(), any()))
                 .thenReturn(false);
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -315,5 +323,16 @@ class ReservationServiceTest {
     void shouldThrowException_whenDatesAreNull() {
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, null, null));
+    }
+
+    @Test
+    void shouldThrowException_whenDatesNotWithinAvailabilityWindow() {
+        LocalDate checkIn = LocalDate.of(2025, 7, 1);
+        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        when(availableDatesRepository.existsAvailability(
+                apartment.getId(), checkIn, checkOut)).thenReturn(false);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.createReservation(renter, apartment, checkIn, checkOut));
     }
 }
