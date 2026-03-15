@@ -23,6 +23,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("checkOut") LocalDate checkOut
     );
 
+    @Query("""
+        SELECT r FROM Reservation r
+        WHERE r.apartment.id = :apartmentId
+        AND r.status NOT IN ('CANCELLED', 'DECLINED')
+    """)
+    List<Reservation> findActiveByApartmentId(@Param("apartmentId") Long apartmentId);
+
     List<Reservation> findByRenterId(Long renterId);
     List<Reservation> findByApartmentLandlordId(Long landlordId);
     long countByStatus(ReservationStatus status);

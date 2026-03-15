@@ -4,6 +4,7 @@ import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
 import com.stayflow.backend.domain.apartment.Apartment;
+import com.stayflow.backend.domain.apartment.ApartmentAvailableDatesRepository;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
 import com.stayflow.backend.domain.user.User;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,14 @@ import java.util.List;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final ApartmentAvailableDatesRepository availableDatesRepository;
 
     public Reservation createReservation(User renter, Apartment apartment,
                                          LocalDate checkIn, LocalDate checkOut) {
         validateDates(checkIn, checkOut);
         validateApartmentAvailable(apartment);
         validateNotOwnApartment(renter, apartment);
+        validateWithinAvailabilityWindow(apartment.getId(), checkIn, checkOut);
         validateNoDatesOverlap(apartment.getId(), checkIn, checkOut);
 
         BigDecimal totalPrice = calculatePrice(apartment.getPricePerNight(), checkIn, checkOut);
@@ -92,11 +95,21 @@ public class ReservationService {
         }
     }
 
+    private void validateWithinAvailabilityWindow(Long apartmentId, LocalDate checkIn, LocalDate checkOut) {
+        if (!availableDatesRepository.existsAvailability(apartmentId, checkIn, checkOut)) {
+            throw new InvalidReservationException("Selected dates are not within any availability window");
+        }
+    }
+
     private void validateNoDatesOverlap(Long apartmentId,
                                         LocalDate checkIn, LocalDate checkOut) {
         if (reservationRepository.existsOverlapping(apartmentId, checkIn, checkOut)) {
             throw new ReservationConflictException("Apartment is already booked for these dates");
         }
+    }
+
+    public List<Reservation> getBookedRanges(Long apartmentId) {
+        return reservationRepository.findActiveByApartmentId(apartmentId);
     }
 
     private void validateCancellable(Reservation reservation) {

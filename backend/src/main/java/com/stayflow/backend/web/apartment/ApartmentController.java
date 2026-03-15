@@ -4,10 +4,13 @@ import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentAvailableDates;
 import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.apartment.ApartmentType;
+import com.stayflow.backend.domain.reservation.ReservationService;
 import com.stayflow.backend.domain.user.User;
 import com.stayflow.backend.infrastructure.storage.CloudinaryService;
 import com.stayflow.backend.web.apartment.dto.ApartmentRequest;
 import com.stayflow.backend.web.apartment.dto.ApartmentResponse;
+import com.stayflow.backend.web.apartment.dto.AvailabilityResponse;
+import com.stayflow.backend.web.apartment.dto.BookedRangeResponse;
 import com.stayflow.backend.web.common.SortUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class ApartmentController {
 
     private final ApartmentService apartmentService;
     private final CloudinaryService cloudinaryService;
+    private final ReservationService reservationService;
 
 
     @GetMapping
@@ -158,9 +162,22 @@ public class ApartmentController {
     }
 
     @GetMapping("/{id}/availability")
-    public ResponseEntity<List<ApartmentAvailableDates>> getAvailability(
+    public ResponseEntity<List<AvailabilityResponse>> getAvailability(
             @PathVariable Long id) {
-        return ResponseEntity.ok(apartmentService.getAvailability(id));
+        return ResponseEntity.ok(
+                apartmentService.getAvailability(id).stream()
+                        .map(AvailabilityResponse::from)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/{id}/booked-dates")
+    public ResponseEntity<List<BookedRangeResponse>> getBookedDates(@PathVariable Long id) {
+        return ResponseEntity.ok(
+            reservationService.getBookedRanges(id).stream()
+                .map(r -> new BookedRangeResponse(r.getCheckIn(), r.getCheckOut()))
+                .toList()
+        );
     }
 
     @PostMapping("/{id}/photos")
