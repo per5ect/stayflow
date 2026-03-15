@@ -5,7 +5,7 @@ import {
   ApartmentFilters,
   PageResponse,
 } from '../domains/apartment.types';
-import { AvailabilityWindow } from '../domains/availability.types';
+import { AvailabilityWindow, BookedRange } from '../domains/availability.types';
 
 export const apartmentAdapter = {
   getAll: (filters?: ApartmentFilters) =>
@@ -37,6 +37,9 @@ export const apartmentAdapter = {
 
   removeAvailability: (id: number, availabilityId: number) =>
     api.delete<string>(`/api/apartments/${id}/availability/${availabilityId}`).then((r) => r.data),
+
+  getBookedDates: (id: number) =>
+    api.get<BookedRange[]>(`/api/apartments/${id}/booked-dates`).then((r) => r.data),
 
   uploadPhotos: (id: number, files: File[]) => {
     const form = new FormData();

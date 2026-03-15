@@ -1,6 +1,12 @@
 export type ApartmentType = 'ROOM' | 'APARTMENT' | 'STUDIO' | 'HOUSE' | 'VILLA';
 export type ApartmentStatus = 'ACTIVE' | 'INACTIVE';
 
+export interface ApartmentAvailableDate {
+  id: number;
+  availableFrom: string;
+  availableTo: string;
+}
+
 export interface ApartmentResponse {
   id: number;
   title: string;
@@ -15,6 +21,7 @@ export interface ApartmentResponse {
   status: ApartmentStatus;
   landlordName: string;
   createdAt: string;
+  availableDates: ApartmentAvailableDate[];
 }
 
 export interface ApartmentRequest {

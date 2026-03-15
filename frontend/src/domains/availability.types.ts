@@ -3,3 +3,8 @@ export interface AvailabilityWindow {
   availableFrom: string;
   availableTo: string;
 }
+
+export interface BookedRange {
+  checkIn: string;
+  checkOut: string;
+}
