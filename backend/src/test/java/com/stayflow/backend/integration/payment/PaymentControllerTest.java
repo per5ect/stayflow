@@ -51,6 +51,8 @@ class PaymentControllerTest extends BaseIntegrationTest {
         renterToken = registerAndLogin("renter-pay@test.com", "RENTER");
         otherRenterToken = registerAndLogin("other-renter@test.com", "RENTER");
         apartmentId = createApartment(landlordToken);
+        addAvailability(landlordToken, apartmentId,
+                LocalDate.now().plusDays(1), LocalDate.now().plusDays(60));
         reservationId = createReservation(5);
         approveReservation();
     }
@@ -157,6 +159,18 @@ class PaymentControllerTest extends BaseIntegrationTest {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + renterToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private void addAvailability(String token, Long aptId, LocalDate from, LocalDate to) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/apartments/" + aptId + "/availability")
+                        .queryParam("from", from.toString())
+                        .queryParam("to", to.toString())
+                        .build())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .retrieve()
                 .toBodilessEntity();
     }

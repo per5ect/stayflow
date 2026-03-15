@@ -48,6 +48,8 @@ class ReservationControllerTest extends BaseIntegrationTest {
         landlordToken = registerAndLogin("landlord@test.com", "LANDLORD");
         renterToken = registerAndLogin("renter@test.com", "RENTER");
         apartmentId = createApartment(landlordToken);
+        addAvailability(landlordToken, apartmentId,
+                LocalDate.now().plusDays(1), LocalDate.now().plusDays(60));
     }
 
     @Test
@@ -171,6 +173,18 @@ class ReservationControllerTest extends BaseIntegrationTest {
                         .toEntity(ReservationResponse.class)
                         .getBody())
                 .getId();
+    }
+
+    private void addAvailability(String token, Long aptId, LocalDate from, LocalDate to) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/apartments/" + aptId + "/availability")
+                        .queryParam("from", from.toString())
+                        .queryParam("to", to.toString())
+                        .build())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private Long createApartment(String token) {
