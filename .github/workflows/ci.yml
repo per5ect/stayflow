@@ -1,18 +1,15 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "backend/**"
   pull_request:
-    paths:
-      - "backend/**"
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  packages: write
 
 jobs:
   backend:
@@ -59,10 +56,14 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Static analysis (Checkstyle)
+        run: ./mvnw -q checkstyle:check
+
       - name: Build and test (unit + integration)
         run: ./mvnw -q clean verify
 
       - name: Upload test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
@@ -76,18 +77,70 @@ jobs:
           path: backend/target/site/jacoco
           if-no-files-found: error
 
-      - name: Docker build (backend)
-        run: docker build -t stayflow-backend:ci .
-
-      - name: Save Docker image artifact
-        run: docker save stayflow-backend:ci -o backend-image.tar
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
         with:
-          name: backend-image
-          path: backend/backend-image.tar
-          if-no-files-found: error
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/stayflow-backend:latest
+            ghcr.io/${{ github.repository_owner }}/stayflow-backend:${{ github.sha }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8080
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8080
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/stayflow-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/stayflow-frontend:${{ github.sha }}
 
   deploy-coverage:
     runs-on: ubuntu-latest
@@ -111,3 +164,39 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [ backend, frontend ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Update image tags
+        run: |
+          sed -i "s|stayflow-backend:latest|stayflow-backend:${{ github.sha }}|g" k8s/backend-deployment.yaml
+          sed -i "s|stayflow-frontend:latest|stayflow-frontend:${{ github.sha }}|g" k8s/frontend-deployment.yaml
+
+      - name: Deploy to staging
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/postgres-pvc.yaml
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/postgres-service.yaml
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/backend-service.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl rollout status deployment/backend -n stayflow-staging --timeout=120s
+          kubectl rollout status deployment/frontend -n stayflow-staging --timeout=60s
