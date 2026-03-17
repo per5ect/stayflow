@@ -3,15 +3,18 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
+import { useSnackbar } from '../../../contexts/SnackbarContext';
 
 export function Navbar() {
   const { user, isAuthenticated, isAdmin, isLandlord, isRenter, logout } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [anchor, setAnchor] = useState<null | HTMLElement>(null);
 
   function handleLogout() {
     logout();
     setAnchor(null);
+    showSnackbar('You have been signed out. See you next time!', 'info');
     router.push('/');
   }
 
@@ -28,6 +31,7 @@ export function Navbar() {
         { label: 'My Apartments', href: '/landlord/apartments' },
         { label: 'Reservations', href: '/landlord/reservations' },
         { label: 'Earnings', href: '/landlord/payments' },
+        { label: 'Search', href: '/search' },
       ];
     }
     if (isAdmin) {
@@ -35,6 +39,9 @@ export function Navbar() {
         { label: 'Dashboard', href: '/admin/dashboard' },
         { label: 'Users', href: '/admin/users' },
         { label: 'Apartments', href: '/admin/apartments' },
+        { label: 'Reservations', href: '/admin/reservations' },
+        { label: 'Payments', href: '/admin/payments' },
+        { label: 'Search', href: '/renter/search' },
       ];
     }
     return [];
@@ -55,16 +62,33 @@ export function Navbar() {
 
         <Box sx={{ flex: 1 }} />
 
-        {getNavLinks().map((link) => (
-          <Link key={link.href} href={link.href} style={{ textDecoration: 'none' }}>
-            <Button sx={{ color: 'text.secondary', fontWeight: 500 }}>{link.label}</Button>
-          </Link>
-        ))}
+        {getNavLinks().map((link) => {
+          const isActive = router.pathname === link.href || router.pathname.startsWith(link.href + '/');
+          return (
+            <Link key={link.href} href={link.href} style={{ textDecoration: 'none' }}>
+              <Button
+                sx={{
+                  fontWeight: 500,
+                  color: isActive ? 'primary.main' : 'text.secondary',
+                  borderBottom: isActive ? '2px solid' : '2px solid transparent',
+                  borderColor: isActive ? 'primary.main' : 'transparent',
+                  borderRadius: 0,
+                  pb: '4px',
+                }}
+              >
+                {link.label}
+              </Button>
+            </Link>
+          );
+        })}
 
         {isAuthenticated ? (
           <>
             <IconButton onClick={(e) => setAnchor(e.currentTarget)} sx={{ p: 0 }}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 14 }}>
+              <Avatar
+                src={user?.photoUrl ?? undefined}
+                sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 14 }}
+              >
                 {user?.firstName[0]}{user?.lastName[0]}
               </Avatar>
             </IconButton>

@@ -13,7 +13,12 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
 
 const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/verify'];
 
-const PUBLIC_ROUTES = ['/renter/search'];
+const PUBLIC_ROUTES = ['/renter/search', '/search'];
+
+// Routes accessible by multiple roles beyond the prefix rule
+const EXTRA_ALLOWED: Record<string, UserRole[]> = {
+  '/renter/search': ['RENTER', 'LANDLORD', 'ADMIN'],
+};
 
 function getRequiredRoles(pathname: string): UserRole[] | null {
   for (const prefix of Object.keys(ROLE_ROUTES)) {
@@ -60,10 +65,13 @@ export function RouteGuard({ children }: Props) {
       return;
     }
 
-    // Protected route: wrong role → 403
+    // Protected route: wrong role → 403 (unless extra allowed)
+    const extraAllowed = EXTRA_ALLOWED[pathname];
     if (requiredRoles && role && !requiredRoles.includes(role)) {
-      router.replace('/403');
-      return;
+      if (!extraAllowed?.includes(role)) {
+        router.replace('/403');
+        return;
+      }
     }
   }, [ready, router.pathname, isAuthenticated, role]);
 

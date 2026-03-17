@@ -22,7 +22,7 @@ export function FeaturedApartmentsSection({ featured, isLoading }: Props) {
           <Typography variant="h4" fontWeight={700}>
             Latest listings
           </Typography>
-          <Button variant="outlined" href="/renter/search">
+          <Button variant="outlined" href="/search">
             View all
           </Button>
         </Box>
