@@ -207,7 +207,9 @@ public class ApartmentService {
 
     public Apartment deletePhoto(Apartment apartment, User landlord, String photoUrl) {
         validateOwnership(apartment, landlord);
-        if (apartment.getPhotoUrls() == null) return apartment;
+        if (apartment.getPhotoUrls() == null) {
+            return apartment;
+        };
         String[] updated = Arrays.stream(apartment.getPhotoUrls())
                 .filter(url -> !url.equals(photoUrl))
                 .toArray(String[]::new);

@@ -1,7 +1,6 @@
 package com.stayflow.backend.web.apartment;
 
 import com.stayflow.backend.domain.apartment.Apartment;
-import com.stayflow.backend.domain.apartment.ApartmentAvailableDates;
 import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.apartment.ApartmentType;
 import com.stayflow.backend.domain.reservation.ReservationService;
