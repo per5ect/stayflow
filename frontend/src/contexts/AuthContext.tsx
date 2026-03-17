@@ -6,6 +6,7 @@ interface AuthUser {
   role: UserRole;
   firstName: string;
   lastName: string;
+  photoUrl?: string | null;
 }
 
 interface AuthContextValue {
@@ -13,6 +14,7 @@ interface AuthContextValue {
   token: string | null;
   login: (data: AuthResponse) => void;
   logout: () => void;
+  updateUser: (patch: Partial<AuthUser>) => void;
   isAuthenticated: boolean;
 }
 
@@ -46,8 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  function updateUser(patch: Partial<AuthUser>) {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...patch };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

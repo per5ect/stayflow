@@ -20,6 +20,7 @@ export interface AdminUserResponse {
   lastName: string;
   email: string;
   phoneNumber: string;
+  photoUrl: string | null;
   role: UserRole;
   enabled: boolean;
   emailVerified: boolean;

@@ -25,4 +25,5 @@ export interface AuthResponse {
   role: UserRole;
   firstName: string;
   lastName: string;
+  photoUrl?: string | null;
 }

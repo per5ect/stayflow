@@ -24,15 +24,7 @@ export function useLoginController() {
       showSnackbar(`Welcome back, ${response.firstName}!`, 'success');
 
       const redirect = router.query.redirect as string | undefined;
-      if (redirect) {
-        router.push(redirect);
-      } else if (response.role === 'RENTER') {
-        router.push('/renter/search');
-      } else if (response.role === 'LANDLORD') {
-        router.push('/landlord/apartments');
-      } else {
-        router.push('/admin/dashboard');
-      }
+      router.push(redirect ?? '/');
     } catch (error) {
       showSnackbar(getErrorMessage(error), 'error');
     }
