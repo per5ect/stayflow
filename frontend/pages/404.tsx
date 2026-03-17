@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { Box, Typography, Button, Container } from '@mui/material';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <Container maxWidth="sm">
+      <Head><title>404 Not Found | StayFlow</title></Head>
       <Box
         sx={{
           display: 'flex',

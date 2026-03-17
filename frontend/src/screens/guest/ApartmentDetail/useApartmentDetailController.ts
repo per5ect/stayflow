@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { apartmentAdapter } from '../../../adapters/apartment.adapter';
@@ -18,6 +18,7 @@ export function useApartmentDetailController() {
   const router = useRouter();
   const id = Number(router.query.id);
   const { showSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
 
   const checkInParam = typeof router.query.checkIn === 'string' ? router.query.checkIn : null;
   const checkOutParam = typeof router.query.checkOut === 'string' ? router.query.checkOut : null;
@@ -84,6 +85,7 @@ export function useApartmentDetailController() {
       }),
     onSuccess: () => {
       showSnackbar('Reservation sent! Waiting for landlord approval.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['reservations', 'my'] });
       router.push('/renter/reservations');
     },
     onError: (error) => {

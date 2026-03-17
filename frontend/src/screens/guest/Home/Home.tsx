@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { Box } from "@mui/material";
 import { Navbar } from "../../../components/organisms/Navbar/Navbar";
 import { useHomeController } from "./useHomeController";
@@ -13,6 +14,7 @@ export default function Home() {
 
   return (
     <Box>
+      <Head><title>StayFlow — Find your perfect stay</title></Head>
       <Navbar />
       <HeroSection city={city} setCity={setCity} handleSearch={handleSearch} />
       <HowItWorksSection />

@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { Box, Container, Typography, Button } from "@mui/material";
 import ImageIcon from "@mui/icons-material/Image";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -14,6 +15,7 @@ export default function ApartmentDetail() {
 
   return (
     <Box>
+      <Head><title>{apartment ? `${apartment.title} | StayFlow` : 'StayFlow'}</title></Head>
       <Navbar />
       <Container maxWidth="lg" sx={{ py: 5 }}>
         {isLoading ? (

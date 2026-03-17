@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { Box, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useRef, useState } from "react";
@@ -70,6 +71,7 @@ export default function Search() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+      <Head><title>Search Apartments | StayFlow</title></Head>
       <Navbar />
 
       <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>

@@ -9,6 +9,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -22,6 +23,7 @@ export default function Login() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', display: 'flex', alignItems: 'center', py: 4 }}>
+      <Head><title>Log In | StayFlow</title></Head>
       <Container maxWidth="xs">
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>

@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { Box, Typography, Button, Container } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import Link from 'next/link';
 export default function Forbidden() {
   return (
     <Container maxWidth="sm">
+      <Head><title>403 Forbidden | StayFlow</title></Head>
       <Box
         sx={{
           display: 'flex',
