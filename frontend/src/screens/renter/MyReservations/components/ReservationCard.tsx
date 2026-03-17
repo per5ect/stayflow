@@ -153,7 +153,7 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
       <Box sx={{ px: 2.5, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {reservation.status === 'PENDING' && (
           <Alert severity="info">
-            Your reservation is awaiting landlord review. You'll be notified once it's approved or declined.
+            Your reservation is awaiting landlord review. You&apos;ll be notified once it&apos;s approved or declined.
           </Alert>
         )}
 
@@ -199,7 +199,7 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
             <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">
               Message from landlord
             </Typography>
-            "{reservation.landlordMessage}"
+            &quot;{reservation.landlordMessage}&quot;
           </Alert>
         )}
 

@@ -32,7 +32,7 @@ export default function Checkout() {
           </Box>
         ) : !reservation ? (
           <Alert severity="error">
-            Reservation not found or you don't have permission to pay for it.
+            Reservation not found or you don&apos;t have permission to pay for it.
           </Alert>
         ) : reservation.status !== 'APPROVED' ? (
           <Alert severity="warning">
