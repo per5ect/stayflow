@@ -1,7 +1,7 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-COPY pom.xml mvnw ./
+COPY pom.xml mvnw checkstyle.xml ./
 COPY .mvn .mvn
 RUN ./mvnw -q -DskipTests=true dependency:go-offline
 
