@@ -16,6 +16,7 @@ spec:
       containers:
         - name: backend
           image: ghcr.io/per5ect/stayflow-backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           envFrom:
@@ -23,6 +24,9 @@ spec:
                 name: stayflow-config
             - secretRef:
                 name: stayflow-secret
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres:5432/$(DB_USER)"
           resources:
             requests:
               cpu: 200m

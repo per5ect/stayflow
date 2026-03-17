@@ -16,6 +16,7 @@ spec:
       containers:
         - name: frontend
           image: ghcr.io/per5ect/stayflow-frontend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           resources:

@@ -4,7 +4,6 @@ metadata:
   name: stayflow-config
   namespace: stayflow-staging
 data:
-  DB_URL: jdbc:postgresql://postgres:5432/stayflow
   DB_TEST_URL: jdbc:postgresql://postgres:5432/stayflow_test
   MAIL_HOST: smtp.gmail.com
   APP_COMMISSION_RATE: "0.10"
