@@ -229,8 +229,15 @@ jobs:
           kubectl rollout status deployment/backend -n stayflow-staging --timeout=180s
           kubectl rollout status deployment/frontend -n stayflow-staging --timeout=60s
 
-      - name: Show running pods
-        run: kubectl get pods -n stayflow-staging
+      - name: Show pods and logs on failure
+        if: always()
+        run: |
+          kubectl get pods -n stayflow-staging
+          kubectl describe pods -n stayflow-staging
+          POD=$(kubectl get pod -n stayflow-staging -l app=backend -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
+          if [ -n "$POD" ]; then
+            kubectl logs $POD -n stayflow-staging --tail=50
+          fi
 
   release:
     runs-on: ubuntu-latest
