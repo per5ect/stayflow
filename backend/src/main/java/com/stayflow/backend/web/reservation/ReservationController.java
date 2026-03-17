@@ -5,6 +5,7 @@ import com.stayflow.backend.domain.apartment.ApartmentService;
 import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.reservation.ReservationService;
 import com.stayflow.backend.domain.user.User;
+import com.stayflow.backend.infrastructure.email.EmailService;
 import com.stayflow.backend.web.common.SortUtils;
 import com.stayflow.backend.web.reservation.dto.ReservationRequest;
 import com.stayflow.backend.web.reservation.dto.ReservationResponse;
@@ -26,6 +27,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final ApartmentService apartmentService;
+    private final EmailService emailService;
 
 
     @PostMapping
@@ -93,6 +95,11 @@ public class ReservationController {
             @RequestParam(required = false) String message) {
         Reservation reservation = reservationService.getById(id);
         Reservation approved = reservationService.approveReservation(reservation, user, message);
+        emailService.sendReservationApproved(
+                approved.getRenter().getEmail(),
+                approved.getApartment().getTitle(),
+                message
+        );
         return ResponseEntity.ok(ReservationResponse.from(approved));
     }
 
@@ -104,6 +111,11 @@ public class ReservationController {
             @RequestParam(required = false) String message) {
         Reservation reservation = reservationService.getById(id);
         Reservation declined = reservationService.declineReservation(reservation, user, message);
+        emailService.sendReservationDeclined(
+                declined.getRenter().getEmail(),
+                declined.getApartment().getTitle(),
+                message
+        );
         return ResponseEntity.ok(ReservationResponse.from(declined));
     }
 }

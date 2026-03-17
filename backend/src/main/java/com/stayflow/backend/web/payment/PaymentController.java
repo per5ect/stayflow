@@ -6,6 +6,7 @@ import com.stayflow.backend.domain.payment.PaymentService;
 import com.stayflow.backend.domain.reservation.Reservation;
 import com.stayflow.backend.domain.reservation.ReservationService;
 import com.stayflow.backend.domain.user.User;
+import com.stayflow.backend.infrastructure.email.EmailService;
 import com.stayflow.backend.web.payment.dto.PaymentRequest;
 import com.stayflow.backend.web.payment.dto.PaymentResponse;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final ReservationService reservationService;
+    private final EmailService emailService;
 
     @PostMapping
     @PreAuthorize("hasRole('RENTER')")
@@ -42,6 +44,8 @@ public class PaymentController {
                 request.getCardLastFour(),
                 request.getCardBrand()
         );
+        emailService.sendPaymentReceiptToRenter(payment.getRenter().getEmail(), payment);
+        emailService.sendPaymentReceiptToLandlord(payment.getLandlord().getEmail(), payment);
         return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 
