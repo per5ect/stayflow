@@ -336,4 +336,15 @@ class ReservationServiceTest {
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, checkIn, checkOut));
     }
+
+    @Test
+    void shouldNotApplyDiscount_at6Nights() {
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = checkIn.plusDays(6);
+
+        BigDecimal price = reservationService.calculatePrice(
+                BigDecimal.valueOf(100), checkIn, checkOut);
+
+        assertEquals(BigDecimal.valueOf(600), price);
+    }
 }

@@ -214,6 +214,24 @@ class UserServiceTest {
     }
 
     @Test
+    void shouldNotDeleteAvatar_whenUserHasNoAvatar() {
+        existingUser.setPhotoUrl(null);
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        userService.updateAvatar(existingUser, "new.png");
+
+        verify(cloudinaryService, never()).deleteImage(any());
+    }
+
+    @Test
+    void shouldThrowException_whenUserNotFound_onDelete() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () ->
+                userService.deleteUser(99L));
+    }
+
+    @Test
     void shouldReturnLandlordStats() {
         Long landlordId = 10L;
 

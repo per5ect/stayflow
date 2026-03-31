@@ -86,4 +86,15 @@ class JwtServiceTest {
 
         assertEquals("RENTER", role);
     }
+
+    @Test
+    void shouldReturnTrue_whenTokenIsExpired() {
+        JwtService expiredJwtService = new JwtService(
+                "stayflow-super-secret-jwt-key-change-in-production-2024",
+                -1L
+        );
+        String token = expiredJwtService.generateToken(user);
+
+        assertTrue(expiredJwtService.isTokenExpired(token));
+    }
 }
