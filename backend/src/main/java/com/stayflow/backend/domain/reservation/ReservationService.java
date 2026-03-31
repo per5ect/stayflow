@@ -141,6 +141,9 @@ public class ReservationService {
         if (!reservation.getApartment().getLandlord().getId().equals(landlord.getId())) {
             throw new UnauthorizedException("You can only approve reservations for your apartments");
         }
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            throw new InvalidReservationException("Only pending reservations can be approved");
+        }
         reservation.setStatus(ReservationStatus.APPROVED);
         reservation.setLandlordMessage(message);
         reservation.setUpdatedAt(LocalDateTime.now());
@@ -150,6 +153,9 @@ public class ReservationService {
     public Reservation declineReservation(Reservation reservation, User landlord, String message) {
         if (!reservation.getApartment().getLandlord().getId().equals(landlord.getId())) {
             throw new UnauthorizedException("You can only decline reservations for your apartments");
+        }
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            throw new InvalidReservationException("Only pending reservations can be declined");
         }
         reservation.setStatus(ReservationStatus.DECLINED);
         reservation.setLandlordMessage(message);
