@@ -75,8 +75,8 @@ public class ReservationService {
         if (checkIn == null || checkOut == null) {
             throw new InvalidReservationException("Check-in and check-out dates are required");
         }
-        if (!checkOut.isAfter(checkIn.plusDays(0))) {
-            throw new InvalidReservationException("Check-out must be after check-in");
+        if (checkIn.isBefore(LocalDate.now())) {
+            throw new InvalidReservationException("Check-in date cannot be in the past");
         }
         if (!checkOut.isAfter(checkIn)) {
             throw new InvalidReservationException("Check-out must be at least 1 day after check-in");

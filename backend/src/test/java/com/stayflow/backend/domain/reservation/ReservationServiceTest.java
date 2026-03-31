@@ -77,8 +77,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldThrowException_whenCheckOutIsBeforeCheckIn() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 10);
-        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        LocalDate checkIn = LocalDate.now().plusDays(10);
+        LocalDate checkOut = LocalDate.now().plusDays(5);
 
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, checkIn, checkOut));
@@ -86,8 +86,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldThrowException_whenCheckOutEqualsCheckIn() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 10);
-        LocalDate checkOut = LocalDate.of(2025, 7, 10);
+        LocalDate checkIn = LocalDate.now().plusDays(10);
+        LocalDate checkOut = LocalDate.now().plusDays(10);
 
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, checkIn, checkOut));
@@ -97,8 +97,8 @@ class ReservationServiceTest {
     @Test
     void shouldThrowException_whenApartmentIsInactive() {
         apartment.setStatus(ApartmentStatus.INACTIVE);
-        LocalDate checkIn = LocalDate.of(2025, 7, 1);
-        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(5);
 
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, checkIn, checkOut));
@@ -107,8 +107,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldThrowException_whenLandlordTriesToBookOwnApartment() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 1);
-        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(5);
 
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(landlord, apartment, checkIn, checkOut));
@@ -116,8 +116,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldThrowException_whenDatesOverlap() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 1);
-        LocalDate checkOut = LocalDate.of(2025, 7, 10);
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(10);
         when(availableDatesRepository.existsAvailability(
                 apartment.getId(), checkIn, checkOut)).thenReturn(true);
         when(reservationRepository.existsOverlapping(
@@ -129,8 +129,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldCreateReservation_whenAllConditionsAreMet() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 1);
-        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(5);
         when(availableDatesRepository.existsAvailability(any(), any(), any()))
                 .thenReturn(true);
         when(reservationRepository.existsOverlapping(any(), any(), any()))
@@ -320,6 +320,27 @@ class ReservationServiceTest {
     }
 
     @Test
+    void shouldThrowException_whenCheckInIsInThePast() {
+        LocalDate checkIn = LocalDate.now().minusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(1);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.createReservation(renter, apartment, checkIn, checkOut));
+    }
+
+    @Test
+    void shouldNotThrowException_whenCheckInIsToday() {
+        LocalDate checkIn = LocalDate.now();
+        LocalDate checkOut = LocalDate.now().plusDays(1);
+        when(availableDatesRepository.existsAvailability(any(), any(), any())).thenReturn(true);
+        when(reservationRepository.existsOverlapping(any(), any(), any())).thenReturn(false);
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        assertDoesNotThrow(() ->
+                reservationService.createReservation(renter, apartment, checkIn, checkOut));
+    }
+
+    @Test
     void shouldThrowException_whenDatesAreNull() {
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, null, null));
@@ -327,8 +348,8 @@ class ReservationServiceTest {
 
     @Test
     void shouldThrowException_whenDatesNotWithinAvailabilityWindow() {
-        LocalDate checkIn = LocalDate.of(2025, 7, 1);
-        LocalDate checkOut = LocalDate.of(2025, 7, 5);
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = LocalDate.now().plusDays(5);
         when(availableDatesRepository.existsAvailability(
                 apartment.getId(), checkIn, checkOut)).thenReturn(false);
 
