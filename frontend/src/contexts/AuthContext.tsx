@@ -16,6 +16,7 @@ interface AuthContextValue {
   logout: () => void;
   updateUser: (patch: Partial<AuthUser>) => void;
   isAuthenticated: boolean;
+  hydrated: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('token');
@@ -31,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(stored);
       setUser(JSON.parse(storedUser));
     }
+    setHydrated(true);
   }, []);
 
   function login(data: AuthResponse) {
@@ -58,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isAuthenticated: !!token, hydrated }}>
       {children}
     </AuthContext.Provider>
   );
