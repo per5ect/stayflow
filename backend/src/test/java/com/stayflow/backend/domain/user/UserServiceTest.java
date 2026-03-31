@@ -207,7 +207,6 @@ class UserServiceTest {
     @Test
     void shouldDeleteUserById() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(userRepository.findByEmail(existingUser.getEmail())).thenReturn(Optional.of(existingUser));
 
         userService.deleteUser(1L);
 
