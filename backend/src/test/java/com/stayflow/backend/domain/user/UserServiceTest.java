@@ -195,6 +195,29 @@ class UserServiceTest {
     }
 
     @Test
+    void shouldBeEnabled_afterEmailVerification() {
+        when(userRepository.findByEmail("petr@test.com"))
+                .thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        User result = userService.verifyEmail("petr@test.com", "123456");
+
+        assertTrue(result.isEnabled());
+    }
+
+    @Test
+    void shouldNotBeEnabled_beforeEmailVerification() {
+        when(userRepository.existsByEmail("petr@test.com")).thenReturn(false);
+        when(passwordEncoder.encode("plainPassword")).thenReturn("hashedPassword");
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        User result = userService.register(
+                "Petr", "Svoboda", "petr@test.com", "plainPassword", "+420123456789", UserRole.RENTER);
+
+        assertFalse(result.isEnabled());
+    }
+
+    @Test
     void shouldDeleteOldAvatar_whenUpdatingAvatar() {
         existingUser.setPhotoUrl("old.png");
         when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
