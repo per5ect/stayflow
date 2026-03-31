@@ -78,6 +78,33 @@ class PaymentServiceTest {
     }
 
     @Test
+    void shouldNotPersistPayment_whenReservationSaveFails() {
+        when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(reservationRepository.save(any())).thenThrow(new RuntimeException("DB error"));
+
+        assertThrows(RuntimeException.class, () ->
+                paymentService.processPayment(reservation, landlord, "4242", "VISA"));
+    }
+
+    @Test
+    void shouldCalculateCommission_withTwoDecimalPlaces() {
+        BigDecimal amount = new BigDecimal("1000.05");
+
+        BigDecimal commission = paymentService.calculateCommission(amount);
+
+        assertEquals(new BigDecimal("100.01"), commission);
+    }
+
+    @Test
+    void shouldCalculateLandlordPayout_withTwoDecimalPlaces() {
+        BigDecimal amount = new BigDecimal("1000.05");
+
+        BigDecimal payout = paymentService.calculateLandlordPayout(amount);
+
+        assertEquals(new BigDecimal("900.05"), payout);
+    }
+
+    @Test
     void shouldCalculateCommission_as10PercentOfAmount() {
         BigDecimal amount = BigDecimal.valueOf(1000);
 
