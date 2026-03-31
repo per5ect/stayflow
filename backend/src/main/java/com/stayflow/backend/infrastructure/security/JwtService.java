@@ -63,7 +63,11 @@ public class JwtService {
     }
 
     public boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
+        try {
+            return extractClaims(token).getExpiration().before(new Date());
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            return true;
+        }
     }
 
     private SecretKey getSigningKey() {

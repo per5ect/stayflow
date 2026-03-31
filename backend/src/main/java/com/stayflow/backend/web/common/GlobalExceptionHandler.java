@@ -7,6 +7,7 @@ import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.payment.PaymentException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
+import com.stayflow.backend.common.exception.reservation.ReservationNotFoundException;
 import com.stayflow.backend.common.exception.user.InvalidPasswordException;
 import com.stayflow.backend.common.exception.user.InvalidVerificationCodeException;
 import com.stayflow.backend.common.exception.user.UserAlreadyExistsException;
@@ -83,6 +84,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleReservationNotFound(ReservationNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(ReservationConflictException.class)

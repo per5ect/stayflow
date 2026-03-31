@@ -230,11 +230,28 @@ class UserServiceTest {
     @Test
     void shouldDeleteUserById() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(userRepository.findByEmail(existingUser.getEmail())).thenReturn(Optional.of(existingUser));
 
         userService.deleteUser(1L);
 
         verify(userRepository).delete(existingUser);
+    }
+
+    @Test
+    void shouldNotDeleteAvatar_whenUserHasNoAvatar() {
+        existingUser.setPhotoUrl(null);
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        userService.updateAvatar(existingUser, "new.png");
+
+        verify(cloudinaryService, never()).deleteImage(any());
+    }
+
+    @Test
+    void shouldThrowException_whenUserNotFound_onDelete() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () ->
+                userService.deleteUser(99L));
     }
 
     @Test

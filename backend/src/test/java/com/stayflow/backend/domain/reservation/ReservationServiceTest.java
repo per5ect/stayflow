@@ -3,6 +3,7 @@ package com.stayflow.backend.domain.reservation;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
+import com.stayflow.backend.common.exception.reservation.ReservationNotFoundException;
 import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentAvailableDatesRepository;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
@@ -68,8 +69,8 @@ class ReservationServiceTest {
                 .id(1L)
                 .renter(renter)
                 .apartment(apartment)
-                .checkIn(LocalDate.of(2025, 7, 1))
-                .checkOut(LocalDate.of(2025, 7, 5))
+                .checkIn(LocalDate.now().plusDays(1))
+                .checkOut(LocalDate.now().plusDays(5))
                 .status(ReservationStatus.PENDING)
                 .totalPrice(BigDecimal.valueOf(400))
                 .build();
@@ -212,7 +213,7 @@ class ReservationServiceTest {
     void shouldThrowException_whenReservationNotFound() {
         when(reservationRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(InvalidReservationException.class, () ->
+        assertThrows(ReservationNotFoundException.class, () ->
                 reservationService.getById(99L));
     }
 
@@ -395,5 +396,16 @@ class ReservationServiceTest {
 
         assertThrows(InvalidReservationException.class, () ->
                 reservationService.createReservation(renter, apartment, checkIn, checkOut));
+    }
+
+    @Test
+    void shouldNotApplyDiscount_at6Nights() {
+        LocalDate checkIn = LocalDate.now().plusDays(1);
+        LocalDate checkOut = checkIn.plusDays(6);
+
+        BigDecimal price = reservationService.calculatePrice(
+                BigDecimal.valueOf(100), checkIn, checkOut);
+
+        assertEquals(BigDecimal.valueOf(600), price);
     }
 }

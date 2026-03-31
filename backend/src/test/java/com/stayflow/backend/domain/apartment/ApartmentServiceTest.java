@@ -349,4 +349,40 @@ class ApartmentServiceTest {
         assertEquals(1, result.getPhotoUrls().length);
         assertEquals("two.png", result.getPhotoUrls()[0]);
     }
+
+    @Test
+    void shouldReturnEmptyPage_whenAllApartmentsHaveConflicts() {
+        Apartment a1 = Apartment.builder().id(1L).status(ApartmentStatus.ACTIVE).build();
+        Apartment a2 = Apartment.builder().id(2L).status(ApartmentStatus.ACTIVE).build();
+        when(apartmentRepository.findWithFilters(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(a1, a2)));
+        when(apartmentAvailableDatesRepository.existsAvailability(any(), any(), any()))
+                .thenReturn(true);
+        when(reservationRepository.existsOverlapping(any(), any(), any()))
+                .thenReturn(true);
+
+        var page = apartmentService.findWithFilters(
+                null, null, null, null, null,
+                LocalDate.now().plusDays(5), LocalDate.now().plusDays(8),
+                org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertTrue(page.getContent().isEmpty());
+        assertEquals(0, page.getTotalElements());
+    }
+
+    @Test
+    void shouldReturnAllApartments_whenNoDatesProvided() {
+        Apartment a1 = Apartment.builder().id(1L).status(ApartmentStatus.ACTIVE).build();
+        Apartment a2 = Apartment.builder().id(2L).status(ApartmentStatus.ACTIVE).build();
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        when(apartmentRepository.findWithFilters(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(a1, a2)));
+
+        var page = apartmentService.findWithFilters(
+                null, null, null, null, null, null, null, pageable);
+
+        assertEquals(2, page.getContent().size());
+        verifyNoInteractions(apartmentAvailableDatesRepository);
+        verifyNoInteractions(reservationRepository);
+    }
 }
