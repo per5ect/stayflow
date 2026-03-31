@@ -304,6 +304,46 @@ class ReservationServiceTest {
     }
 
     @Test
+    void shouldThrowException_whenApprovingAlreadyApprovedReservation() {
+        reservation.setStatus(ReservationStatus.APPROVED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.approveReservation(reservation, landlord, "Welcome!"));
+    }
+
+    @Test
+    void shouldThrowException_whenApprovingDeclinedReservation() {
+        reservation.setStatus(ReservationStatus.DECLINED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.approveReservation(reservation, landlord, "Welcome!"));
+    }
+
+    @Test
+    void shouldThrowException_whenApprovingCancelledReservation() {
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.approveReservation(reservation, landlord, "Welcome!"));
+    }
+
+    @Test
+    void shouldThrowException_whenDecliningApprovedReservation() {
+        reservation.setStatus(ReservationStatus.APPROVED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.declineReservation(reservation, landlord, "Sorry"));
+    }
+
+    @Test
+    void shouldThrowException_whenDecliningAlreadyDeclinedReservation() {
+        reservation.setStatus(ReservationStatus.DECLINED);
+
+        assertThrows(InvalidReservationException.class, () ->
+                reservationService.declineReservation(reservation, landlord, "Sorry"));
+    }
+
+    @Test
     void shouldThrowException_whenLandlordApprovesOtherLandlordsReservation() {
         User otherLandlord = User.builder().id(99L).email("other@landlord.com").build();
 
