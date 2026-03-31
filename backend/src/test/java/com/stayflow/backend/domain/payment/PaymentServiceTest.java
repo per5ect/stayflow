@@ -78,12 +78,39 @@ class PaymentServiceTest {
     }
 
     @Test
+    void shouldNotPersistPayment_whenReservationSaveFails() {
+        when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(reservationRepository.save(any())).thenThrow(new RuntimeException("DB error"));
+
+        assertThrows(RuntimeException.class, () ->
+                paymentService.processPayment(reservation, landlord, "4242", "VISA"));
+    }
+
+    @Test
+    void shouldCalculateCommission_withTwoDecimalPlaces() {
+        BigDecimal amount = new BigDecimal("1000.05");
+
+        BigDecimal commission = paymentService.calculateCommission(amount);
+
+        assertEquals(new BigDecimal("100.01"), commission);
+    }
+
+    @Test
+    void shouldCalculateLandlordPayout_withTwoDecimalPlaces() {
+        BigDecimal amount = new BigDecimal("1000.05");
+
+        BigDecimal payout = paymentService.calculateLandlordPayout(amount);
+
+        assertEquals(new BigDecimal("900.04"), payout);
+    }
+
+    @Test
     void shouldCalculateCommission_as10PercentOfAmount() {
         BigDecimal amount = BigDecimal.valueOf(1000);
 
         BigDecimal commission = paymentService.calculateCommission(amount);
 
-        assertEquals(BigDecimal.valueOf(100.0), commission);
+        assertEquals(new BigDecimal("100.00"), commission);
     }
 
     @Test
@@ -92,12 +119,12 @@ class PaymentServiceTest {
 
         BigDecimal payout = paymentService.calculateLandlordPayout(amount);
 
-        assertEquals(BigDecimal.valueOf(900.0), payout);
+        assertEquals(new BigDecimal("900.00"), payout);
     }
 
 
     @Test
-    void shouldCreatePayment_withPendingStatus() {
+    void shouldCreatePayment_withCompletedStatus() {
         when(paymentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Payment result = paymentService.processPayment(
@@ -118,8 +145,8 @@ class PaymentServiceTest {
         Payment result = paymentService.processPayment(
                 reservation, landlord, "4242", "VISA");
 
-        assertEquals(BigDecimal.valueOf(100.0), result.getCommission());
-        assertEquals(BigDecimal.valueOf(900.0), result.getLandlordPayout());
+        assertEquals(new BigDecimal("100.00"), result.getCommission());
+        assertEquals(new BigDecimal("900.00"), result.getLandlordPayout());
     }
 
     @Test
@@ -178,8 +205,8 @@ class PaymentServiceTest {
         assertEquals("VISA", result.getCardBrand());
         assertEquals(PaymentStatus.COMPLETED, result.getStatus());
         assertEquals(BigDecimal.valueOf(1000), result.getAmount());
-        assertEquals(BigDecimal.valueOf(100.0), result.getCommission());
-        assertEquals(BigDecimal.valueOf(900.0), result.getLandlordPayout());
+        assertEquals(new BigDecimal("100.00"), result.getCommission());
+        assertEquals(new BigDecimal("900.00"), result.getLandlordPayout());
     }
 
     @Test

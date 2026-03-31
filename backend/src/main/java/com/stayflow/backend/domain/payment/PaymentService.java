@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,6 +26,7 @@ public class PaymentService {
 
     private static final BigDecimal COMMISSION_RATE = BigDecimal.valueOf(0.10);
 
+    @Transactional
     public Payment processPayment(Reservation reservation, User landlord,
                                   String cardLastFour, String cardBrand) {
         if (reservation.getStatus() == ReservationStatus.PAID) {
@@ -55,12 +57,12 @@ public class PaymentService {
 
     public BigDecimal calculateCommission(BigDecimal amount) {
         return amount.multiply(COMMISSION_RATE)
-                .setScale(1, RoundingMode.HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal calculateLandlordPayout(BigDecimal amount) {
         return amount.subtract(calculateCommission(amount))
-                .setScale(1, RoundingMode.HALF_UP);
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private Payment buildPayment(Reservation reservation, User landlord,
