@@ -89,7 +89,7 @@ export function Navbar() {
                 src={user?.photoUrl ?? undefined}
                 sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 14 }}
               >
-                {user?.firstName[0]}{user?.lastName[0]}
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
               </Avatar>
             </IconButton>
             <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>

@@ -17,7 +17,10 @@ export function useVerifyEmailController() {
   const { handleSubmit, formState: { isSubmitting } } = form;
 
   const onSubmit = handleSubmit(async ({ code }) => {
-    if (!email) return;
+    if (!email) {
+      showSnackbar('Verification link is invalid. Please register again.', 'error');
+      return;
+    }
     try {
       await authAdapter.verify({ email, code });
       showSnackbar('Email verified successfully! You can now sign in.', 'success');
