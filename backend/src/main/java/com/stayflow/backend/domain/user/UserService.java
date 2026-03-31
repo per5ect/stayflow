@@ -119,10 +119,8 @@ public class UserService {
     }
 
     public void deleteUser(Long id) {
-        User user = findUserByEmail(
-                userRepository.findById(id)
-                        .orElseThrow(() -> new UserNotFoundException("User not found"))
-                        .getEmail());
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         userRepository.delete(user);
     }
 

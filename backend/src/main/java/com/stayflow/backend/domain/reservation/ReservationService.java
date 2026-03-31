@@ -3,6 +3,7 @@ package com.stayflow.backend.domain.reservation;
 import com.stayflow.backend.common.exception.user.UnauthorizedException;
 import com.stayflow.backend.common.exception.reservation.InvalidReservationException;
 import com.stayflow.backend.common.exception.reservation.ReservationConflictException;
+import com.stayflow.backend.common.exception.reservation.ReservationNotFoundException;
 import com.stayflow.backend.domain.apartment.Apartment;
 import com.stayflow.backend.domain.apartment.ApartmentAvailableDatesRepository;
 import com.stayflow.backend.domain.apartment.ApartmentStatus;
@@ -126,7 +127,7 @@ public class ReservationService {
 
     public Reservation getById(Long id) {
         return reservationRepository.findById(id)
-                .orElseThrow(() -> new InvalidReservationException("Reservation not found"));
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
     }
 
     public List<Reservation> getRenterReservations(Long renterId) {
