@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import SearchIcon from "@mui/icons-material/Search";
 import { Control, Controller } from "react-hook-form";
+import { RegisterRequest } from "../../../../domains/auth.types";
 
 const ROLES = [
   {
@@ -19,8 +20,7 @@ const ROLES = [
 ];
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<RegisterRequest>;
 }
 
 export function RoleSelector({ control }: Props) {
